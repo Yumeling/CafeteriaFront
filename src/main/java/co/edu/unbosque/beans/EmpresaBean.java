@@ -1,20 +1,21 @@
 package co.edu.unbosque.beans;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.http.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import co.edu.unbosque.model.EmpresaDTO;
 import co.edu.unbosque.model.DireccionEmpresaDTO;
-import co.edu.unbosque.model.persistence.ExternalHTTPRequestHandler;
 import co.edu.unbosque.util.LocalDateAdapter;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
@@ -24,124 +25,234 @@ import jakarta.inject.Named;
 @Named("empresaBean")
 @SessionScoped
 public class EmpresaBean implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private List<EmpresaDTO> empresas = new ArrayList<>();
+    private EmpresaDTO empresaSeleccionada = new EmpresaDTO();
     private EmpresaDTO nuevaEmpresa = new EmpresaDTO();
-    private List<DireccionEmpresaDTO> direcciones = new ArrayList<>();
+
+    // para direcciones
+    private List<DireccionEmpresaDTO> direccionesEmpresaSeleccionada = new ArrayList<>();
+    private DireccionEmpresaDTO nuevaDireccionParaEmpresa = new DireccionEmpresaDTO();
+    private Integer eliminarNit;
+    private Integer mostrarDireccionesNit; // nit para el dialog de mostrar direcciones
 
     private final String BASE_URL = "http://localhost:8083/api/empresas";
-    private final String DIR_URL = "http://localhost:8083/api/direccion_empresa";
-
-    private final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(java.time.LocalDate.class, new LocalDateAdapter())
-            .create();
+    private final String DIR_BY_EMPRESA = "http://localhost:8083/api/direcciones/empresa";
+    private final HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
+    private final Gson gson = new GsonBuilder().registerTypeAdapter(java.time.LocalDate.class, new LocalDateAdapter()).create();
 
     @PostConstruct
     public void init() {
-        cargarDirecciones();
         cargarEmpresas();
     }
 
     public void cargarEmpresas() {
         try {
-            String body = ExternalHTTPRequestHandler.doGet(BASE_URL + "/all");
-            Type t = new TypeToken<List<EmpresaDTO>>() {}.getType();
-            empresas = gson.fromJson(body, t);
-            if (empresas == null) empresas = new ArrayList<>();
+            HttpRequest req = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(BASE_URL))
+                    .header("Content-Type", "application/json")
+                    .build();
+
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            String json = resp.body() == null ? "[]" : resp.body().trim();
+
+            if (json.startsWith("[")) {
+                EmpresaDTO[] arr = gson.fromJson(json, EmpresaDTO[].class);
+                empresas = Arrays.asList(arr);
+            } else if (json.startsWith("{")) {
+                JsonElement je = JsonParser.parseString(json);
+                if (je.getAsJsonObject().has("data")) {
+                    empresas = Arrays.asList(gson.fromJson(je.getAsJsonObject().get("data"), EmpresaDTO[].class));
+                } else {
+                    EmpresaDTO single = gson.fromJson(json, EmpresaDTO.class);
+                    empresas = new ArrayList<>();
+                    empresas.add(single);
+                }
+            } else {
+                empresas = new ArrayList<>();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             empresas = new ArrayList<>();
+            FacesContext.getCurrentInstance()
+                .addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudieron cargar las empresas."));
         }
     }
 
-    public void cargarDirecciones() {
-        try {
-            String body = ExternalHTTPRequestHandler.doGet(DIR_URL + "/listar");
-            Type t = new TypeToken<List<DireccionEmpresaDTO>>() {}.getType();
-            direcciones = gson.fromJson(body, t);
-            if (direcciones == null) direcciones = new ArrayList<>();
-        } catch (Exception e) {
-            e.printStackTrace();
-            direcciones = new ArrayList<>();
-        }
+    public String seleccionarParaEditar(EmpresaDTO e) {
+        this.empresaSeleccionada = e;
+        return null;
     }
 
+    // ---------- crear ----------
     public void crearEmpresa() {
         try {
-            // Evitar enviar objetos anidados; enviar direccionId en su lugar
-            JsonObject j = new JsonObject();
-            j.addProperty("nit", nuevaEmpresa.getNit());
-            j.addProperty("nombre", nuevaEmpresa.getNombre());
-            j.addProperty("email", nuevaEmpresa.getEmail());
-            if (nuevaEmpresa.getTelefono() != null) j.addProperty("telefono", nuevaEmpresa.getTelefono());
-            if (nuevaEmpresa.getDireccionId() != null) j.addProperty("direccionId", nuevaEmpresa.getDireccionId());
-            j.addProperty("estado", nuevaEmpresa.getEstado());
+            // force estado activo and no direccionId on create (as requested)
+            nuevaEmpresa.setEstado("activo");
+            nuevaEmpresa.setDireccionId(null);
 
-            ExternalHTTPRequestHandler.doPost(BASE_URL + "/create", gson.toJson(j));
+            String json = gson.toJson(nuevaEmpresa);
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Empresa creada"));
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo crear la empresa. Código: " + resp.statusCode()));
+            }
             nuevaEmpresa = new EmpresaDTO();
             cargarEmpresas();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Empresa creada"));
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo crear la empresa"));
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
         }
     }
 
-    public void eliminarEmpresa(Integer nit) {
+    // ---------- actualizar ----------
+    public void actualizarEmpresa() {
         try {
-            ExternalHTTPRequestHandler.doDelete(BASE_URL + "/delete/" + nit);
+            if (empresaSeleccionada == null || empresaSeleccionada.getNit() == null) return;
+
+            // According to request: do not send direccionId in update (keep it null)
+            empresaSeleccionada.setDireccionId(null);
+
+            String json = gson.toJson(empresaSeleccionada);
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/" + empresaSeleccionada.getNit()))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Empresa actualizada"));
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar. Código: " + resp.statusCode()));
+            }
             cargarEmpresas();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Empresa eliminada"));
         } catch (Exception e) {
             e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo eliminar la empresa"));
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
         }
     }
 
-	public List<EmpresaDTO> getEmpresas() {
-		return empresas;
-	}
+    // ---------- preparar mostrar direcciones ----------
+    public void prepararMostrarDirecciones(Integer nit) {
+        this.mostrarDireccionesNit = nit;
+        cargarDireccionesPorEmpresa(nit);
+    }
 
-	public void setEmpresas(List<EmpresaDTO> empresas) {
-		this.empresas = empresas;
-	}
+    public void cargarDireccionesPorEmpresa(Integer nit) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(DIR_BY_EMPRESA + "/" + nit))
+                    .header("Content-Type", "application/json")
+                    .build();
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            String body = resp.body() == null ? "[]" : resp.body().trim();
+            if (body.startsWith("[")) {
+                DireccionEmpresaDTO[] arr = gson.fromJson(body, DireccionEmpresaDTO[].class);
+                direccionesEmpresaSeleccionada = Arrays.asList(arr);
+            } else {
+                direccionesEmpresaSeleccionada = new ArrayList<>();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            direccionesEmpresaSeleccionada = new ArrayList<>();
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudieron cargar las direcciones de la empresa."));
+        }
+    }
 
-	public EmpresaDTO getNuevaEmpresa() {
-		return nuevaEmpresa;
-	}
+    // ---------- preparar crear direccion para empresa (abre dialog en UI) ----------
+    public void prepararCrearDireccionParaEmpresa(Integer nit) {
+        nuevaDireccionParaEmpresa = new DireccionEmpresaDTO();
+        nuevaDireccionParaEmpresa.setEmpresaNit(nit);
+        // el show del dialog lo hace el oncomplete en el xhtml
+    }
 
-	public void setNuevaEmpresa(EmpresaDTO nuevaEmpresa) {
-		this.nuevaEmpresa = nuevaEmpresa;
-	}
+    // ---------- crear direccion para empresa ----------
+    public void crearDireccionParaEmpresa() {
+        try {
+            String json = gson.toJson(nuevaDireccionParaEmpresa);
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8083/api/direcciones"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Dirección creada y asociada"));
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo crear la dirección. Código: " + resp.statusCode()));
+            }
+            nuevaDireccionParaEmpresa = new DireccionEmpresaDTO();
+            // refrescar la vista de empresa y direcciones si corresponde
+            cargarEmpresas();
+            if (mostrarDireccionesNit != null) cargarDireccionesPorEmpresa(mostrarDireccionesNit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
+        }
+    }
 
-	public List<DireccionEmpresaDTO> getDirecciones() {
-		return direcciones;
-	}
+    // ---------- marcar inactivo (no borrar) ----------
+    public void prepararEliminar(Integer nit) {
+        this.eliminarNit = nit;
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Preparado", "Listo para poner inactivo NIT: " + nit));
+    }
 
-	public void setDirecciones(List<DireccionEmpresaDTO> direcciones) {
-		this.direcciones = direcciones;
-	}
+    public void eliminarEmpresa() {
+        try {
+            if (eliminarNit == null) return;
+            // hacemos PUT parcial cambiando estado -> inactivo
+            EmpresaDTO dto = new EmpresaDTO();
+            dto.setEstado("inactivo");
+            String json = gson.toJson(dto);
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/" + eliminarNit))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Hecho", "Empresa marcada como inactiva"));
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo marcar inactiva. Código: " + resp.statusCode()));
+            }
+            cargarEmpresas();
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
+        }
+    }
 
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
+    // getters & setters
 
-	public String getBASE_URL() {
-		return BASE_URL;
-	}
+    public List<EmpresaDTO> getEmpresas() { return empresas; }
+    public void setEmpresas(List<EmpresaDTO> empresas) { this.empresas = empresas; }
 
-	public String getDIR_URL() {
-		return DIR_URL;
-	}
+    public EmpresaDTO getEmpresaSeleccionada() { return empresaSeleccionada; }
+    public void setEmpresaSeleccionada(EmpresaDTO empresaSeleccionada) { this.empresaSeleccionada = empresaSeleccionada; }
 
-	public Gson getGson() {
-		return gson;
-	}
+    public EmpresaDTO getNuevaEmpresa() { return nuevaEmpresa; }
+    public void setNuevaEmpresa(EmpresaDTO nuevaEmpresa) { this.nuevaEmpresa = nuevaEmpresa; }
 
-  
+    public List<DireccionEmpresaDTO> getDireccionesEmpresaSeleccionada() { return direccionesEmpresaSeleccionada; }
+    public void setDireccionesEmpresaSeleccionada(List<DireccionEmpresaDTO> direccionesEmpresaSeleccionada) { this.direccionesEmpresaSeleccionada = direccionesEmpresaSeleccionada; }
+
+    public DireccionEmpresaDTO getNuevaDireccionParaEmpresa() { return nuevaDireccionParaEmpresa; }
+    public void setNuevaDireccionParaEmpresa(DireccionEmpresaDTO nuevaDireccionParaEmpresa) { this.nuevaDireccionParaEmpresa = nuevaDireccionParaEmpresa; }
+
+    public Integer getEliminarNit() { return eliminarNit; }
+    public void setEliminarNit(Integer eliminarNit) { this.eliminarNit = eliminarNit; }
+
+    public Integer getMostrarDireccionesNit() { return mostrarDireccionesNit; }
+    public void setMostrarDireccionesNit(Integer mostrarDireccionesNit) { this.mostrarDireccionesNit = mostrarDireccionesNit; }
 }

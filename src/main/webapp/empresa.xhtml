@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+    <title>Empresas - Cafetería NamNam</title>
+    <style>
+        :root{ --bg: #f5f7fb; --card: #ffffff; --accent: #6c5ce7; --muted: #7f8c8d; --success: #27ae60; --danger: #e74c3c; }
+        body{ margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); }
+        .layout{ display:grid; grid-template-columns: 250px 1fr; min-height:100vh; }
+        .sidebar{ background: #2d3436; color: #fff; padding: 2rem 1rem; }
+        .sidebar h2{ margin:0 0 0.5rem 0 }
+        .main{ padding: 2rem; }
+        .header-card{ background: var(--card); padding:1.25rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); margin-bottom:1.5rem; }
+        .table-card{ background: var(--card); padding:1.25rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+        .page-title{ color: #2c3e50; margin:0 }
+        .section-title{ color:var(--muted); margin-top:.5rem }
+        .actions-row{ display:flex; gap:.5rem; align-items:center }
+        @media (max-width:900px){ .layout{ grid-template-columns: 1fr; } .sidebar{ display:none; } }
+    </style>
+</h:head>
+
+<h:body>
+    <h:form id="empresasForm">
+        <f:event type="preRenderView" listener="#{empresaBean.cargarEmpresas}" />
+
+        <div class="layout">
+            <div class="sidebar">
+                <h2>☕ NamNam</h2>
+                <p>Panel de Administración</p>
+                <p:menu styleClass="menu-vertical" >
+                    <p:menuitem value="Dashboard" url="admin.xhtml" icon="pi pi-home" />
+                    <p:menuitem value="Productos" url="producto.xhtml" icon="pi pi-box" />
+                    <p:menuitem value="Ingredientes" url="ingrediente.xhtml" icon="pi pi-leaf" />
+                    <p:menuitem value="Órdenes Compra" url="ordenes-compra.xhtml" icon="pi pi-shopping-cart" />
+                    <p:menuitem value="Proveedores" url="proveedor.xhtml" icon="pi pi-truck" />
+                </p:menu>
+            </div>
+
+            <div class="main">
+                <div class="header-card">
+                    <h1 class="page-title">Empresas</h1>
+                    <p class="section-title">Gestión de empresas (NIT manual)</p>
+                </div>
+
+                <div class="table-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <div id="headerStats">
+                            <h3 style="margin:0">Listado de empresas</h3>
+                            <small class="section-title">Total: <strong>#{empresaBean.empresas.size()}</strong></small>
+                        </div>
+
+                        <div class="actions-row">
+                            <p:messages id="msgs" autoUpdate="true" closable="true" showDetail="true" showSummary="false" />
+                            <p:commandButton icon="pi pi-refresh" title="Refrescar"
+                                             update=":empresasForm:dtEmpresas :empresasForm:headerStats"
+                                             actionListener="#{empresaBean.cargarEmpresas}"
+                                             process="@this"/>
+                            <p:commandButton value="➕ Nueva Empresa" icon="pi pi-plus"
+                                             onclick="PF('dlgNuevaEmpresa').show()" type="button"/>
+                        </div>
+                    </div>
+
+                    <p:dataTable id="dtEmpresas" value="#{empresaBean.empresas}" var="empresa"
+                                 rowIndexVar="rowIndex"
+                                 paginator="true" rows="8" responsiveLayout="scroll" style="width:100%"
+                                 emptyMessage="No se encontraron empresas">
+
+                        <p:column headerText="NIT" style="width:110px; text-align:center;">
+                            <h:outputText value="#{empresa.nit != null ? empresa.nit : (rowIndex + 1)}" />
+                        </p:column>
+
+                        <p:column headerText="Nombre"><h:outputText value="#{empresa.nombre}" /></p:column>
+                        <p:column headerText="Email"><h:outputText value="#{empresa.email}" /></p:column>
+                        <p:column headerText="Teléfono"><h:outputText value="#{empresa.telefono}" /></p:column>
+
+                        <!-- Columna Dirección: solo botón "Mostrar direcciones" -->
+                        <p:column headerText="Dirección">
+                            <p:commandButton value="👁 Mostrar direcciones" icon="pi pi-eye"
+                                             actionListener="#{empresaBean.prepararMostrarDirecciones(empresa.nit)}"
+                                             update=":empresasForm:dlgMostrarDireccionesGrid :empresasForm:msgs"
+                                             oncomplete="PF('dlgMostrarDirecciones').show()" process="@this"/>
+                        </p:column>
+
+                        <p:column headerText="Estado"><h:outputText value="#{empresa.estado}" /></p:column>
+
+                        <p:column headerText="Acciones" style="width:320px">
+                            <!-- lupa (ver detalle) eliminada según pedido -->
+
+                            <p:commandButton icon="pi pi-pencil" title="Editar"
+                                             actionListener="#{empresaBean.seleccionarParaEditar(empresa)}"
+                                             update=":formEditar:dlgEditarGrid"
+                                             oncomplete="PF('dlgEditar').show()"
+                                             process="@this" styleClass="ui-button-warning"/>
+
+                            <!-- + Agregar direccion (abre dialog de crear direccion con empresaNit pre-cargado) -->
+                            <p:commandButton icon="pi pi-plus" title="Agregar dirección"
+                                             actionListener="#{empresaBean.prepararCrearDireccionParaEmpresa(empresa.nit)}"
+                                             process="@this"
+                                             update=":formCrearDireccion:dlgCrearDireccionGrid :empresasForm:msgs"
+                                             oncomplete="PF('dlgCrearDireccion').show()"
+                                             styleClass="ui-button-success" />
+
+                            <p:commandButton icon="pi pi-trash" title="Eliminar (inactivar)"
+                                             actionListener="#{empresaBean.prepararEliminar(empresa.nit)}"
+                                             process="@this"
+                                             update=":empresasForm:msgs"
+                                             oncomplete="PF('confirmDelete').show()" styleClass="ui-button-danger"/>
+                        </p:column>
+                    </p:dataTable>
+
+                    <!-- Detalle dialog (opcional) -->
+                    <p:dialog header="Detalle de la Empresa" widgetVar="dlgDetalle" modal="true" id="dlgDetalle" closable="true">
+                        <h:panelGrid id="dlgDetalleGrid" columns="2" cellpadding="6">
+                            <h:outputText value="NIT:" /><h:outputText value="#{empresaBean.empresaSeleccionada.nit}" />
+                            <h:outputText value="Nombre:" /><h:outputText value="#{empresaBean.empresaSeleccionada.nombre}" />
+                            <h:outputText value="Email:" /><h:outputText value="#{empresaBean.empresaSeleccionada.email}" />
+                            <h:outputText value="Teléfono:" /><h:outputText value="#{empresaBean.empresaSeleccionada.telefono}" />
+                            <h:outputText value="Dirección ID:" /><h:outputText value="#{empresaBean.empresaSeleccionada.direccionId}" />
+                            <h:outputText value="Estado:" /><h:outputText value="#{empresaBean.empresaSeleccionada.estado}" />
+                        </h:panelGrid>
+                    </p:dialog>
+
+                    <!-- Mostrar direcciones dialog (sin columna ID) -->
+                    <p:dialog header="Direcciones de la Empresa" widgetVar="dlgMostrarDirecciones" modal="true" id="dlgMostrarDirecciones" closable="true" dynamic="true">
+                        <h:panelGrid id="dlgMostrarDireccionesGrid" columns="1" cellpadding="6">
+                            <p:dataTable id="dtDirecciones" value="#{empresaBean.direccionesEmpresaSeleccionada}" var="dir" rows="10" emptyMessage="No hay direcciones asociadas">
+                                <!-- ID eliminado según pedido -->
+                                <p:column headerText="Dirección"><h:outputText value="#{dir.direccionText}" /></p:column>
+                                <p:column headerText="Ciudad"><h:outputText value="#{dir.ciudad}" /></p:column>
+                                <p:column headerText="Departamento"><h:outputText value="#{dir.departamento}" /></p:column>
+                                <p:column headerText="País"><h:outputText value="#{dir.pais}" /></p:column>
+                            </p:dataTable>
+                        </h:panelGrid>
+                    </p:dialog>
+
+                    <!-- Confirm delete -> marcar inactivo -->
+                    <p:confirmDialog widgetVar="confirmDelete" header="Confirmar" message="¿Marcar esta empresa como inactiva?" icon="pi pi-exclamation-triangle">
+                        <p:commandButton value="Sí" actionListener="#{empresaBean.eliminarEmpresa}"
+                                         update=":empresasForm:dtEmpresas :empresasForm:headerStats :empresasForm:msgs" oncomplete="PF('confirmDelete').hide()" />
+                        <p:commandButton value="No" onclick="PF('confirmDelete').hide();" type="button" />
+                    </p:confirmDialog>
+
+                </div>
+            </div>
+        </div>
+    </h:form>
+
+    <!-- Editar en su propio form (NO pide nit ni direccionId) -->
+    <h:form id="formEditar">
+        <p:dialog header="Editar Empresa" widgetVar="dlgEditar" modal="true" id="dlgEditar" closable="true">
+            <h:panelGrid id="dlgEditarGrid" columns="2" cellpadding="6">
+                <!-- NO mostramos NIT para edición, se toma desde empresaSeleccionada -->
+                <h:outputLabel for="editNombre" value="Nombre:" />
+                <p:inputText id="editNombre" value="#{empresaBean.empresaSeleccionada.nombre}" required="true" />
+
+                <h:outputLabel for="editEmail" value="Email:" />
+                <p:inputText id="editEmail" value="#{empresaBean.empresaSeleccionada.email}" />
+
+                <h:outputLabel for="editTelefono" value="Teléfono:" />
+                <p:inputText id="editTelefono" value="#{empresaBean.empresaSeleccionada.telefono}">
+                    <f:convertNumber integerOnly="true" />
+                </p:inputText>
+
+                <!-- NO pedimos direccionId en edición (se enviará null) -->
+
+                <h:outputLabel for="editEstado" value="Estado:" />
+                <p:selectOneMenu id="editEstado" value="#{empresaBean.empresaSeleccionada.estado}" required="true">
+                    <f:selectItem itemLabel="activo" itemValue="activo" />
+                    <f:selectItem itemLabel="inactivo" itemValue="inactivo" />
+                </p:selectOneMenu>
+            </h:panelGrid>
+
+            <p:separator />
+            <p:commandButton value="Guardar" actionListener="#{empresaBean.actualizarEmpresa}"
+                             process="@form"
+                             update=":empresasForm:dtEmpresas :empresasForm:headerStats :empresasForm:msgs :empresasForm:dlgDetalleGrid"
+                             oncomplete="PF('dlgEditar').hide()" styleClass="ui-button-success" />
+        </p:dialog>
+    </h:form>
+
+    <!-- Crear empresa (NO pide estado ni direccionId; ambos se manejan en el bean) -->
+    <h:form id="formCrear">
+        <p:dialog header="Crear Empresa" widgetVar="dlgNuevaEmpresa" modal="true" id="dlgNuevaEmpresa" closable="true">
+            <h:panelGrid id="dlgNuevaEmpresaGrid" columns="2" cellpadding="6">
+                <h:outputLabel for="newNit" value="NIT:" />
+                <p:inputText id="newNit" value="#{empresaBean.nuevaEmpresa.nit}" required="true">
+                    <f:convertNumber integerOnly="true" />
+                </p:inputText>
+
+                <h:outputLabel for="newNombre" value="Nombre:" />
+                <p:inputText id="newNombre" value="#{empresaBean.nuevaEmpresa.nombre}" required="true" />
+
+                <h:outputLabel for="newEmail" value="Email:" />
+                <p:inputText id="newEmail" value="#{empresaBean.nuevaEmpresa.email}" />
+
+                <h:outputLabel for="newTelefono" value="Teléfono:" />
+                <p:inputText id="newTelefono" value="#{empresaBean.nuevaEmpresa.telefono}">
+                    <f:convertNumber integerOnly="true" />
+                </p:inputText>
+
+                <!-- NO pedimos direccionId ni estado en el formulario de creación -->
+            </h:panelGrid>
+
+            <p:separator />
+            <p:commandButton value="Crear" actionListener="#{empresaBean.crearEmpresa}"
+                             process="@form"
+                             update=":empresasForm:dtEmpresas :empresasForm:headerStats :empresasForm:msgs"
+                             oncomplete="PF('dlgNuevaEmpresa').hide()"
+                             styleClass="ui-button-success" />
+        </p:dialog>
+    </h:form>
+
+    <!-- Crear Direccion para Empresa (propio form) -->
+    <h:form id="formCrearDireccion">
+        <p:dialog header="Crear Dirección para Empresa" widgetVar="dlgCrearDireccion" modal="true" id="dlgCrearDireccion" closable="true">
+            <h:panelGrid id="dlgCrearDireccionGrid" columns="2" cellpadding="6">
+                <h:outputLabel for="dirText" value="Dirección:" />
+                <p:inputText id="dirText" value="#{empresaBean.nuevaDireccionParaEmpresa.direccionText}" required="true" />
+
+                <h:outputLabel for="dirCiudad" value="Ciudad:" />
+                <p:inputText id="dirCiudad" value="#{empresaBean.nuevaDireccionParaEmpresa.ciudad}" />
+
+                <h:outputLabel for="dirDepartamento" value="Departamento:" />
+                <p:inputText id="dirDepartamento" value="#{empresaBean.nuevaDireccionParaEmpresa.departamento}" />
+
+                <h:outputLabel for="dirPais" value="País:" />
+                <p:inputText id="dirPais" value="#{empresaBean.nuevaDireccionParaEmpresa.pais}" />
+
+                <h:outputLabel for="dirEmpresaNit" value="Empresa NIT:" />
+                <p:inputText id="dirEmpresaNit" value="#{empresaBean.nuevaDireccionParaEmpresa.empresaNit}" disabled="true" />
+            </h:panelGrid>
+
+            <p:separator />
+            <p:commandButton value="Crear" actionListener="#{empresaBean.crearDireccionParaEmpresa}"
+                             process="@form"
+                             update=":empresasForm:dtEmpresas :empresasForm:headerStats :empresasForm:msgs"
+                             oncomplete="PF('dlgCrearDireccion').hide()" styleClass="ui-button-success" />
+        </p:dialog>
+    </h:form>
+
+</h:body>
+</html>

@@ -1,3 +1,4 @@
+// co.edu.unbosque.beans.DireccionEmpresaBean (actualizado)
 package co.edu.unbosque.beans;
 
 import java.io.Serializable;
@@ -27,8 +28,9 @@ public class DireccionEmpresaBean implements Serializable {
     private List<DireccionEmpresaDTO> direcciones = new ArrayList<>();
     private DireccionEmpresaDTO nuevaDireccion = new DireccionEmpresaDTO();
 
-    private final String BASE_URL = "http://localhost:8083/api/direccion_empresa";
-
+    // Usar la ruta del controller: /api/direcciones
+    private final String BASE_URL = "http://localhost:8083/api/direcciones";
+    private List<DireccionEmpresaDTO> direccionesEmpresaSeleccionada = new ArrayList<>();
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(java.time.LocalDate.class, new LocalDateAdapter())
             .create();
@@ -40,7 +42,7 @@ public class DireccionEmpresaBean implements Serializable {
 
     public void cargarDirecciones() {
         try {
-            String body = ExternalHTTPRequestHandler.doGet(BASE_URL + "/listar");
+            String body = ExternalHTTPRequestHandler.doGet(BASE_URL); // GET /api/direcciones
             Type t = new TypeToken<List<DireccionEmpresaDTO>>() {}.getType();
             direcciones = gson.fromJson(body, t);
             if (direcciones == null) direcciones = new ArrayList<>();
@@ -53,7 +55,8 @@ public class DireccionEmpresaBean implements Serializable {
     public void crearDireccion() {
         try {
             String json = gson.toJson(nuevaDireccion);
-            ExternalHTTPRequestHandler.doPost(BASE_URL + "/crear", json);
+            // POST /api/direcciones
+            ExternalHTTPRequestHandler.doPost(BASE_URL, json);
             nuevaDireccion = new DireccionEmpresaDTO();
             cargarDirecciones();
             FacesContext.getCurrentInstance().addMessage(null,
@@ -65,47 +68,36 @@ public class DireccionEmpresaBean implements Serializable {
         }
     }
 
-    public void eliminarDireccion(Integer id) {
-        try {
-            ExternalHTTPRequestHandler.doDelete(BASE_URL + "/eliminar/" + id);
-            cargarDirecciones();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Dirección eliminada"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo eliminar la dirección"));
-        }
+    public void prepararCrearParaEmpresa(Integer empresaNit) {
+        nuevaDireccion = new DireccionEmpresaDTO();
+        nuevaDireccion.setEmpresaNit(empresaNit);
     }
 
-	public List<DireccionEmpresaDTO> getDirecciones() {
-		return direcciones;
-	}
-
-	public void setDirecciones(List<DireccionEmpresaDTO> direcciones) {
-		this.direcciones = direcciones;
-	}
-
-	public DireccionEmpresaDTO getNuevaDireccion() {
-		return nuevaDireccion;
-	}
-
-	public void setNuevaDireccion(DireccionEmpresaDTO nuevaDireccion) {
-		this.nuevaDireccion = nuevaDireccion;
-	}
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
-
-	public String getBASE_URL() {
-		return BASE_URL;
-	}
-
-	public Gson getGson() {
-		return gson;
-	}
-
-   
-    
+    // getter/setters...
+    public List<DireccionEmpresaDTO> getDirecciones() { return direcciones; }
+    public void setDirecciones(List<DireccionEmpresaDTO> direcciones) { this.direcciones = direcciones; }
+    public DireccionEmpresaDTO getNuevaDireccion() { return nuevaDireccion; }
+    public void setNuevaDireccion(DireccionEmpresaDTO nuevaDireccion) { this.nuevaDireccion = nuevaDireccion; }
+    public String getBASE_URL() { return BASE_URL; }
+    public Gson getGson() { return gson; }
+    public void mostrarDirecciones(Integer nit) {
+        try {
+            // usar mismo ExternalHTTPRequestHandler y Gson
+            String body = ExternalHTTPRequestHandler.doGet("http://localhost:8083/api/direcciones");
+            Type t = new TypeToken<List<DireccionEmpresaDTO>>() {}.getType();
+            List<DireccionEmpresaDTO> all = new Gson().fromJson(body, t);
+            direccionesEmpresaSeleccionada = new ArrayList<>();
+            if (all != null) {
+                for (DireccionEmpresaDTO d : all) {
+                    if (d.getEmpresaNit() != null && d.getEmpresaNit().equals(nit)) {
+                        direccionesEmpresaSeleccionada.add(d);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            direccionesEmpresaSeleccionada = new ArrayList<>();
+        }
+    }
 }
+

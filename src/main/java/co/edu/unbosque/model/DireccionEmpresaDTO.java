@@ -6,24 +6,38 @@ public class DireccionEmpresaDTO {
 	private String ciudad;
 	private String departamento;
 	private String pais;
+	private Integer empresaNit;
 
 	public DireccionEmpresaDTO() {
 		super();
 	}
 
-	
-
-	public DireccionEmpresaDTO(String direccionText, String ciudad, String departamento, String pais) {
+	public DireccionEmpresaDTO(Integer direccionId, String direccionText, String ciudad, String departamento,
+			String pais, Integer empresaNit) {
 		super();
+		this.direccionId = direccionId;
 		this.direccionText = direccionText;
 		this.ciudad = ciudad;
 		this.departamento = departamento;
 		this.pais = pais;
+		this.empresaNit = empresaNit;
 	}
 
+	public Integer getEmpresaNit() {
+		return empresaNit;
+	}
 
+	public void setEmpresaNit(Integer empresaNit) {
+		this.empresaNit = empresaNit;
+	}
 
-	
+	public Integer getDireccionId() {
+		return direccionId;
+	}
+
+	public void setDireccionId(Integer direccionId) {
+		this.direccionId = direccionId;
+	}
 
 	public String getDireccionText() {
 		return direccionText;
