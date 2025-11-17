@@ -11,19 +11,15 @@
         body{ margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); }
         .layout{ display:grid; grid-template-columns: 250px 1fr; min-height:100vh; }
         .sidebar{ background: #2d3436; color: #fff; padding: 2rem 1rem; }
-        .sidebar h2{ margin:0 0 0.5rem 0 }
         .main{ padding: 2rem; }
         .header-card{ background: var(--card); padding:1.25rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); margin-bottom:1.5rem; }
         .table-card{ background: var(--card); padding:1.25rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-        .page-title{ color: #2c3e50; margin:0 }
-        .section-title{ color:var(--muted); margin-top:.5rem }
         .actions-row{ display:flex; gap:.5rem; align-items:center }
         @media (max-width:900px){ .layout{ grid-template-columns: 1fr; } .sidebar{ display:none; } }
     </style>
 </h:head>
 
 <h:body>
-    <!-- Form principal que contiene la tabla y mensajes -->
     <h:form id="ordenesForm">
         <f:event type="preRenderView" listener="#{ordenCompraBean.cargarOrdenes}" />
 
@@ -59,7 +55,10 @@
                                              update=":ordenesForm:dtOrdenes"
                                              actionListener="#{ordenCompraBean.cargarOrdenes}"
                                              process="@this"/>
-                            <p:commandButton value="➕ Nueva Órden" icon="pi pi-plus" onclick="PF('dlgNuevaOrden').show()" type="button"/>
+                            <p:commandButton value="➕ Nueva Orden" icon="pi pi-plus"
+                                             actionListener="#{ordenCompraBean.prepararNuevaOrden}"
+                                             oncomplete="PF('dlgNuevaOrden').show()"
+                                             process="@this"/>
                         </div>
                     </div>
 
@@ -76,24 +75,25 @@
                             <h:outputText value="#{orden.fechaEmision}" />
                         </p:column>
 
-                        <p:column headerText="Fecha Recepción">
-                            <h:outputText value="#{orden.fechaRecepcion}" />
-                        </p:column>
-
                         <p:column headerText="Estado">
                             <h:outputText value="#{orden.estado}" />
-                        </p:column>
-
-                        <p:column headerText="Total">
-                            <h:outputText value="#{orden.total}" />
                         </p:column>
 
                         <p:column headerText="Empresa (NIT)">
                             <h:outputText value="#{orden.nitEmpresa}" />
                         </p:column>
 
-                        <p:column headerText="Admin">
-                            <h:outputText value="#{orden.administradorId}" />
+                        <p:column headerText="Administrador">
+                            <h:outputText value="#{orden.administradorNombre != null ? orden.administradorNombre : orden.administradorId}" />
+                        </p:column>
+
+                        <p:column headerText="Ingredientes" style="width:160px; text-align:center;">
+                            <p:commandButton value="Mostrar ingredientes"
+                                             icon="pi pi-list"
+                                             actionListener="#{ordenCompraBean.verDetalles(orden)}"
+                                             update=":ordenesForm:dlgIngredientesGrid"
+                                             oncomplete="PF('dlgIngredientes').show()"
+                                             process="@this" />
                         </p:column>
 
                         <p:column headerText="Acciones" style="width:240px">
@@ -109,12 +109,12 @@
                                              oncomplete="PF('dlgEditar').show()"
                                              process="@this" styleClass="ui-button-warning"/>
 
-                            <!-- Ahora el botón prepara el id y luego abre el confirmDialog -->
-                            <p:commandButton icon="pi pi-trash" title="Cancelar orden"
+                            <!-- Inactivar (antes 'eliminar'): prepara id y abre confirm -->
+                            <p:commandButton icon="pi pi-trash" title="Inactivar orden"
                                              actionListener="#{ordenCompraBean.prepararCancelar(orden.ordenId)}"
                                              process="@this"
                                              update=":ordenesForm:msgs"
-                                             oncomplete="PF('confirmDelete').show()" />
+                                             oncomplete="PF('confirmDelete').show()" styleClass="ui-button-danger"/>
                         </p:column>
 
                     </p:dataTable>
@@ -128,26 +128,37 @@
                             <h:outputText value="Fecha Emisión:" />
                             <h:outputText value="#{ordenCompraBean.ordenSeleccionada.fechaEmision}" />
 
-                            <h:outputText value="Fecha Recepción:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.fechaRecepcion}" />
-
                             <h:outputText value="Estado:" />
                             <h:outputText value="#{ordenCompraBean.ordenSeleccionada.estado}" />
-
-                            <h:outputText value="Total:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.total}" />
 
                             <h:outputText value="Empresa NIT:" />
                             <h:outputText value="#{ordenCompraBean.ordenSeleccionada.nitEmpresa}" />
 
-                            <h:outputText value="Administrador ID:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.administradorId}" />
+                            <h:outputText value="Administrador:" />
+                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.administradorNombre != null ? ordenCompraBean.ordenSeleccionada.administradorNombre : ordenCompraBean.ordenSeleccionada.administradorId}" />
                         </h:panelGrid>
                     </p:dialog>
 
-                    <!-- Confirm cancel -->
-                    <p:confirmDialog widgetVar="confirmDelete" header="Confirmar" message="¿Marcar esta orden como cancelada?" icon="pi pi-exclamation-triangle">
-                        <p:commandButton value="Sí" actionListener="#{ordenCompraBean.cancelarOrden}"
+                    <!-- Ingredientes de la orden (dialog) - sin columna Costo unit. -->
+                    <p:dialog header="Ingredientes de la Orden" widgetVar="dlgIngredientes" modal="true" id="dlgIngredientes" closable="true" width="600">
+                        <h:panelGrid id="dlgIngredientesGrid" columns="1" cellpadding="6">
+                            <p:dataTable value="#{ordenCompraBean.ordenSeleccionada.ingredientes}" var="ing" rows="8" emptyMessage="No hay ingredientes en esta orden">
+                                <p:column headerText="Código" style="width:90px">
+                                    <h:outputText value="#{ing.codigo}" />
+                                </p:column>
+                                <p:column headerText="Nombre">
+                                    <h:outputText value="#{ing.nombre}" />
+                                </p:column>
+                                <p:column headerText="Cantidad">
+                                    <h:outputText value="#{ing.cantidad}" />
+                                </p:column>
+                            </p:dataTable>
+                        </h:panelGrid>
+                    </p:dialog>
+
+                    <!-- Confirm inactivar (usa eliminarId preparado en prepararCancelar) -->
+                    <p:confirmDialog widgetVar="confirmDelete" header="Confirmar" message="¿Marcar esta orden como inactiva?" icon="pi pi-exclamation-triangle">
+                        <p:commandButton value="Sí" actionListener="#{ordenCompraBean.eliminarOrden}"
                                          update=":ordenesForm:dtOrdenes :ordenesForm:msgs" oncomplete="PF('confirmDelete').hide()" />
                         <p:commandButton value="No" onclick="PF('confirmDelete').hide();" type="button" />
                     </p:confirmDialog>
@@ -157,28 +168,20 @@
         </div>
     </h:form>
 
-    <!-- ===== Editar: propio form (Opción B) ===== -->
+    <!-- ===== Editar: propio form ===== -->
     <h:form id="formEditar">
         <p:dialog header="Editar Orden" widgetVar="dlgEditar" modal="true" id="dlgEditar" closable="true">
             <h:panelGrid id="dlgEditarGrid" columns="2" cellpadding="6">
-                <!-- Fecha Emisión no se edita -->
-
-                <h:outputLabel for="editFechaRecepcion" value="Fecha Recepción:" />
-                <p:calendar id="editFechaRecepcion"
-                            value="#{ordenCompraBean.ordenSeleccionada.fechaRecepcion}"
-                            pattern="yyyy-MM-dd"
-                            mindate="#{ordenCompraBean.minFechaRecepcionEditable}" />
+                <h:outputText value="ID:" />
+                <h:outputText value="#{ordenCompraBean.ordenSeleccionada.ordenId}" />
 
                 <h:outputLabel for="editEstado" value="Estado:" />
-                <!-- quitamos "cancelado" del select -->
                 <p:selectOneMenu id="editEstado" value="#{ordenCompraBean.ordenSeleccionada.estado}" required="true">
                     <f:selectItem itemLabel="pendiente" itemValue="pendiente" />
                     <f:selectItem itemLabel="en_proceso" itemValue="en_proceso" />
                     <f:selectItem itemLabel="recibido" itemValue="recibido" />
+                    <f:selectItem itemLabel="cancelado" itemValue="cancelado" />
                 </p:selectOneMenu>
-
-                <h:outputLabel for="editTotal" value="Total:" />
-                <p:inputText id="editTotal" value="#{ordenCompraBean.ordenSeleccionada.total}" required="true" />
 
                 <h:outputLabel for="editNitEmpresa" value="NIT Empresa:" />
                 <p:inputText id="editNitEmpresa" value="#{ordenCompraBean.ordenSeleccionada.nitEmpresa}" required="true" />
@@ -195,34 +198,62 @@
         </p:dialog>
     </h:form>
 
-    <!-- ===== Crear: propio form (Opción B) ===== -->
+    <!-- ===== Crear: propio form ===== -->
     <h:form id="formCrear">
-        <p:dialog header="Crear Orden" widgetVar="dlgNuevaOrden" modal="true" id="dlgNuevaOrden" closable="true">
+        <p:dialog header="Crear Orden" widgetVar="dlgNuevaOrden" modal="true" id="dlgNuevaOrden" closable="true" resizable="false" width="900">
             <h:panelGrid id="dlgNuevaOrdenGrid" columns="2" cellpadding="6">
-                <!-- fechaEmision se asigna en el bean -->
-                <h:outputLabel for="newFechaRecepcion" value="Fecha Recepción:" />
-                <p:calendar id="newFechaRecepcion"
-                            value="#{ordenCompraBean.nuevaOrden.fechaRecepcion}"
-                            pattern="yyyy-MM-dd"
-                            mindate="#{ordenCompraBean.today}"
-                            required="true" />
-
-                <h:outputLabel for="newEstado" value="Estado:" />
-                <!-- quitamos "cancelado" del select -->
-                <p:selectOneMenu id="newEstado" value="#{ordenCompraBean.nuevaOrden.estado}" required="true">
-                    <f:selectItem itemLabel="pendiente" itemValue="pendiente" />
-                    <f:selectItem itemLabel="en_proceso" itemValue="en_proceso" />
-                    <f:selectItem itemLabel="recibido" itemValue="recibido" />
-                </p:selectOneMenu>
-
-                <h:outputLabel for="newTotal" value="Total:" />
-                <p:inputText id="newTotal" value="#{ordenCompraBean.nuevaOrden.total}" required="true" />
-
+                <!-- No mostramos la fecha de emisión en creación -->
                 <h:outputLabel for="newNitEmpresa" value="NIT Empresa:" />
                 <p:inputText id="newNitEmpresa" value="#{ordenCompraBean.nuevaOrden.nitEmpresa}" required="true" />
 
                 <h:outputLabel for="newAdminId" value="Administrador ID:" />
                 <p:inputText id="newAdminId" value="#{ordenCompraBean.nuevaOrden.administradorId}" required="true" />
+
+                <h:outputLabel for="newAdminName" value="Administrador (Nombre):" />
+                <p:inputText id="newAdminName" value="#{ordenCompraBean.nuevaOrden.administradorNombre}" />
+            </h:panelGrid>
+
+            <p:separator />
+
+            <!-- Agregar ingredientes: selector + cantidad (sin costo) -->
+            <h:panelGrid columns="4" style="margin-top:1rem" cellpadding="6">
+                <h:outputLabel value="Ingrediente:" for="selIng" />
+                <p:selectOneMenu id="selIng" value="#{ordenCompraBean.selectedIngredienteCodigo}">
+                    <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
+                    <f:selectItems value="#{ordenCompraBean.availableIngredientes}" var="ing"
+                                   itemValue="#{ing.codigo}"
+                                   itemLabel="#{ing.nombre} (cod: #{ing.codigo})" />
+                </p:selectOneMenu>
+
+                <h:outputLabel value="Cantidad:" for="selCant" />
+                <p:inputText id="selCant" value="#{ordenCompraBean.selectedCantidad}">
+                    <f:convertNumber integerOnly="true" />
+                </p:inputText>
+
+                <p:commandButton value="Agregar" icon="pi pi-plus"
+                                 actionListener="#{ordenCompraBean.addIngredienteToNuevaOrden}"
+                                 process="@form"
+                                 update=":formCrear:ingredientesTable :formCrear:selIng :formCrear:selCant :ordenesForm:msgs" />
+            </h:panelGrid>
+
+            <!-- Tabla de ingredientes añadidos -->
+            <h:panelGrid columns="1" style="margin-top:1rem">
+                <p:dataTable id="ingredientesTable" value="#{ordenCompraBean.nuevaOrden.ingredientes}" var="ing" rows="6" emptyMessage="Aún no hay ingredientes añadidos">
+                    <p:column headerText="Código" style="width:80px">
+                        <h:outputText value="#{ing.codigo}" />
+                    </p:column>
+                    <p:column headerText="Nombre">
+                        <h:outputText value="#{ing.nombre}" />
+                    </p:column>
+                    <p:column headerText="Cantidad">
+                        <h:outputText value="#{ing.cantidad}" />
+                    </p:column>
+                    <p:column headerText="Acciones" style="width:120px">
+                        <p:commandButton icon="pi pi-trash" title="Remover"
+                                         actionListener="#{ordenCompraBean.removeIngredienteFromNuevaOrden(ing.codigo)}"
+                                         update=":formCrear:ingredientesTable :ordenesForm:msgs" process="@this" />
+                    </p:column>
+                </p:dataTable>
             </h:panelGrid>
 
             <p:separator />

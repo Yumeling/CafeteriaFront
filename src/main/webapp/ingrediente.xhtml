@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Ingredientes - Cafetería NamNam</title>
+    <style>
+        :root{ --bg: #f5f7fb; --card:#fff; --muted:#7f8c8d; --accent:#6c5ce7; }
+        body{ font-family: 'Segoe UI', Tahoma, Verdana, sans-serif; background:var(--bg); margin:0; }
+        .container{ padding:2rem; }
+        .card{ background:var(--card); padding:1rem; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+        .header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    </style>
+</h:head>
+<h:body>
+    <h:form id="formIngredientes">
+        <f:event type="preRenderView" listener="#{ingredienteBean.cargarIngredientes}" />
+
+        <div class="container">
+            <div class="card">
+                <div class="header">
+                    <div>
+                        <h2>Ingredientes</h2>
+                        <small class="muted">Total: <strong>#{ingredienteBean.ingredientes.size()}</strong></small>
+                    </div>
+                    <div>
+                        <p:messages id="msgs" autoUpdate="true" showDetail="true" showSummary="false" closable="true" />
+                        <p:commandButton icon="pi pi-refresh" title="Refrescar" process="@this"
+                                         actionListener="#{ingredienteBean.cargarIngredientes}"
+                                         update=":formIngredientes:dtIngredientes :formIngredientes:msgs" />
+                        <p:commandButton value="➕ Nuevo" icon="pi pi-plus"
+                                         actionListener="#{ingredienteBean.prepararNuevo}"
+                                         oncomplete="PF('dlgNuevo').show()" process="@this" />
+                    </div>
+                </div>
+
+                <!-- Tabla: solo codigo, nombre, costo unitario y estado -->
+                <p:dataTable id="dtIngredientes" value="#{ingredienteBean.ingredientes}" var="ing"
+                             paginator="true" rows="8" responsiveLayout="scroll" emptyMessage="No hay ingredientes">
+                    <p:column headerText="Código" style="width:90px; text-align:center;">
+                        <h:outputText value="#{ing.codigo}" />
+                    </p:column>
+
+                    <p:column headerText="Nombre">
+                        <h:outputText value="#{ing.nombre}" />
+                    </p:column>
+
+                    <p:column headerText="Costo Unitario">
+                        <h:outputText value="#{ing.costoUnitario}" />
+                    </p:column>
+
+                    <p:column headerText="Estado">
+                        <h:outputText value="#{ing.estado}" />
+                    </p:column>
+
+                    <p:column headerText="Acciones" style="width:220px">
+                        <p:commandButton icon="pi pi-pencil" title="Editar"
+                                         actionListener="#{ingredienteBean.prepararEditar(ing)}"
+                                         update=":formEditar:dlgEditarGrid"
+                                         oncomplete="PF('dlgEditar').show()" process="@this" />
+                        <p:commandButton icon="pi pi-trash" title="Eliminar"
+                                         actionListener="#{ingredienteBean.prepararEliminar(ing.codigo)}"
+                                         update=":formIngredientes:msgs"
+                                         oncomplete="PF('confirmDeleteIng').show()" process="@this" />
+                    </p:column>
+                </p:dataTable>
+
+                <!-- Confirm eliminar dentro del mismo form -->
+                <p:confirmDialog widgetVar="confirmDeleteIng" header="Confirmar" message="¿Marcar este ingrediente como agotado?"
+                                icon="pi pi-exclamation-triangle" appendTo="@(body)">
+                    <p:commandButton value="Sí" actionListener="#{ingredienteBean.eliminarIngrediente}"
+                                     update=":formIngredientes:dtIngredientes :formIngredientes:msgs"
+                                     oncomplete="PF('confirmDeleteIng').hide()" />
+                    <p:commandButton value="No" onclick="PF('confirmDeleteIng').hide()" type="button" />
+                </p:confirmDialog>
+
+            </div>
+        </div>
+    </h:form>
+
+    <!-- ===== Dialog Crear ===== (NO pide cantidad ni costo unitario) -->
+    <h:form id="formNuevo">
+        <p:dialog header="Crear Ingrediente" widgetVar="dlgNuevo" modal="true" closable="true">
+            <h:panelGrid columns="2" cellpadding="6" id="dlgNuevoGrid">
+                <h:outputLabel for="newNombre" value="Nombre:" />
+                <p:inputText id="newNombre" value="#{ingredienteBean.nuevoIngrediente.nombre}" required="true" />
+
+                <!-- No pedimos cantidad aquí -->
+                <h:outputLabel for="newCantidadInfo" value="Cantidad (inicial):" />
+                <h:outputText id="newCantidadInfo" value="Se manejará desde lotes / inventario" />
+
+                <!-- no pedir costoUnitario -->
+                <h:outputLabel for="newEstadoInfo" value="Estado (automático):" />
+                <h:outputText id="newEstadoInfo" value="Se establecerá como 'disponible' al crear" />
+            </h:panelGrid>
+
+            <p:separator />
+            <p:commandButton value="Crear" icon="pi pi-save"
+                             actionListener="#{ingredienteBean.crearIngrediente}"
+                             process="@form"
+                             update=":formIngredientes:dtIngredientes :formIngredientes:msgs"
+                             oncomplete="PF('dlgNuevo').hide()" />
+        </p:dialog>
+    </h:form>
+
+    <!-- ===== Dialog Editar ===== (NO permite editar costoUnitario ni cantidad desde aquí) -->
+    <h:form id="formEditar">
+        <p:dialog header="Editar Ingrediente" widgetVar="dlgEditar" modal="true" closable="true">
+            <h:panelGrid id="dlgEditarGrid" columns="2" cellpadding="6">
+                <h:outputLabel value="Código:" />
+                <h:outputText value="#{ingredienteBean.ingredienteSeleccionado.codigo}" />
+
+                <h:outputLabel for="editNombre" value="Nombre:" />
+                <p:inputText id="editNombre" value="#{ingredienteBean.ingredienteSeleccionado.nombre}" required="true" />
+
+                <!-- No editable: costoUnitario -->
+                <h:outputLabel for="editCantidadInfo" value="Cantidad (info):" />
+                <h:outputText id="editCantidadInfo" value="Se controla desde lotes/inventario" />
+
+                <h:outputLabel for="editEstado" value="Estado:" />
+                <p:selectOneMenu id="editEstado" value="#{ingredienteBean.ingredienteSeleccionado.estado}" required="true">
+                    <f:selectItem itemLabel="disponible" itemValue="disponible" />
+                    <f:selectItem itemLabel="agotado" itemValue="agotado" />
+                </p:selectOneMenu>
+            </h:panelGrid>
+
+            <p:separator />
+            <p:commandButton value="Guardar" icon="pi pi-save"
+                             actionListener="#{ingredienteBean.actualizarIngrediente}"
+                             process="@form"
+                             update=":formIngredientes:dtIngredientes :formIngredientes:msgs"
+                             oncomplete="PF('dlgEditar').hide()" />
+        </p:dialog>
+    </h:form>
+</h:body>
+</html>

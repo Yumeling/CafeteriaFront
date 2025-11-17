@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Inventario - Cafetería NamNam</title>
+    <style>
+        :root{ --bg:#f5f7fb; --card:#fff; --muted:#7f8c8d; --accent:#6c5ce7; }
+        body{ margin:0; font-family: 'Segoe UI', Tahoma, Verdana, sans-serif; background:var(--bg); }
+        .container{ padding:2rem; }
+        .card{ background:var(--card); padding:1rem; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+        .header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    </style>
+</h:head>
+<h:body>
+    <h:form id="formInventarios">
+        <f:event type="preRenderView" listener="#{inventarioBean.cargarInventarios}" />
+
+        <div class="container">
+            <div class="card">
+                <div class="header">
+                    <div>
+                        <h2>Inventario</h2>
+                        <small class="muted">Total: <strong>#{inventarioBean.inventarios.size()}</strong></small>
+                    </div>
+                    <div>
+                        <p:messages id="msgs" autoUpdate="true" showDetail="true" showSummary="false" closable="true" />
+                        <p:commandButton icon="pi pi-refresh" title="Refrescar" process="@this"
+                                         actionListener="#{inventarioBean.cargarInventarios}"
+                                         update=":formInventarios:dtInventarios :formInventarios:msgs" />
+                        <p:commandButton value="➕ Nuevo" icon="pi pi-plus" onclick="PF('dlgNuevoInv').show()" type="button"/>
+                    </div>
+                </div>
+
+                <p:dataTable id="dtInventarios" value="#{inventarioBean.inventarios}" var="inv"
+                             paginator="true" rows="10" responsiveLayout="scroll" emptyMessage="No hay inventarios">
+                    <p:column headerText="ID" style="width:80px;text-align:center">
+                        <h:outputText value="#{inv.inventarioId}" />
+                    </p:column>
+
+                    <p:column headerText="Cantidad">
+                        <h:outputText value="#{inv.cantidad}" />
+                    </p:column>
+
+                    <p:column headerText="Stock Mínimo">
+                        <h:outputText value="#{inv.stockMinimo}" />
+                    </p:column>
+
+                    <p:column headerText="Ingrediente">
+                        <h:outputText value="#{inv.ingredienteId}" />
+                    </p:column>
+
+                    <p:column headerText="Administrador">
+                        <h:outputText value="#{inv.administradorId}" />
+                    </p:column>
+
+                    <p:column headerText="Acciones" style="width:260px">
+                        <p:commandButton icon="pi pi-search" title="Ver detalle"
+                                         actionListener="#{inventarioBean.prepararEditar(inv)}"
+                                         update=":formInventarios:dlgDetalleGrid"
+                                         oncomplete="PF('dlgDetalleInv').show()" process="@this" />
+                        <p:commandButton icon="pi pi-pencil" title="Editar"
+                                         actionListener="#{inventarioBean.prepararEditar(inv)}"
+                                         update=":formEditarInv:dlgEditarGrid"
+                                         oncomplete="PF('dlgEditarInv').show()" process="@this" />
+                        <p:commandButton icon="pi pi-trash" title="Eliminar"
+                                         actionListener="#{inventarioBean.prepararEliminar(inv.inventarioId)}"
+                                         update=":formInventarios:msgs"
+                                         oncomplete="PF('confirmDeleteInv').show()" process="@this" />
+                    </p:column>
+                </p:dataTable>
+
+                <!-- Detalle Dialog -->
+                <p:dialog header="Detalle Inventario" widgetVar="dlgDetalleInv" modal="true" id="dlgDetalleInv">
+                    <h:panelGrid id="dlgDetalleGrid" columns="2" cellpadding="6">
+                        <h:outputText value="ID:" /><h:outputText value="#{inventarioBean.inventarioSeleccionado.inventarioId}" />
+                        <h:outputText value="Cantidad:" /><h:outputText value="#{inventarioBean.inventarioSeleccionado.cantidad}" />
+                        <h:outputText value="Stock mínimo:" /><h:outputText value="#{inventarioBean.inventarioSeleccionado.stockMinimo}" />
+                        <h:outputText value="Ingrediente ID:" /><h:outputText value="#{inventarioBean.inventarioSeleccionado.ingredienteId}" />
+                        <h:outputText value="Administrador ID:" /><h:outputText value="#{inventarioBean.inventarioSeleccionado.administradorId}" />
+                    </h:panelGrid>
+                </p:dialog>
+
+                <!-- Confirm delete (inside same form) -->
+                <p:confirmDialog widgetVar="confirmDeleteInv" header="Confirmar" message="¿Eliminar este inventario?"
+                                icon="pi pi-exclamation-triangle" appendTo="@(body)">
+                    <p:commandButton value="Sí" actionListener="#{inventarioBean.eliminarInventario}"
+                                     update=":formInventarios:dtInventarios :formInventarios:msgs"
+                                     oncomplete="PF('confirmDeleteInv').hide()" />
+                    <p:commandButton value="No" onclick="PF('confirmDeleteInv').hide()" type="button" />
+                </p:confirmDialog>
+
+            </div>
+        </div>
+    </h:form>
+
+    <!-- ===== Dialog Crear ===== -->
+    <h:form id="formNuevoInv">
+        <p:dialog header="Crear Inventario" widgetVar="dlgNuevoInv" modal="true" closable="true">
+            <h:panelGrid columns="2" cellpadding="6" id="dlgNuevoInvGrid">
+                <h:outputLabel for="newCantidad" value="Cantidad:" />
+                <p:inputText id="newCantidad" value="#{inventarioBean.nuevoInventario.cantidad}" required="true" />
+
+                <h:outputLabel for="newStock" value="Stock mínimo:" />
+                <p:inputNumber id="newStock" value="#{inventarioBean.nuevoInventario.stockMinimo}" mode="decimal" />
+
+                <h:outputLabel for="newIngrediente" value="Ingrediente:" />
+                <p:selectOneMenu id="newIngrediente" value="#{inventarioBean.nuevoInventario.ingredienteId}" >
+                    <f:selectItems value="#{inventarioBean.ingredientes}" var="ing" itemValue="#{ing.codigo}" itemLabel="#{ing.nombre}" />
+                </p:selectOneMenu>
+
+                <h:outputLabel for="newAdmin" value="Administrador:" />
+                <p:selectOneMenu id="newAdmin" value="#{inventarioBean.nuevoInventario.administradorId}">
+                    <f:selectItems value="#{inventarioBean.administradores}" var="adm" itemValue="#{adm.administradorId}" itemLabel="#{adm.administradorId}" />
+                </p:selectOneMenu>
+            </h:panelGrid>
+
+            <p:separator />
+            <p:commandButton value="Crear" icon="pi pi-save"
+                             actionListener="#{inventarioBean.crearInventario}"
+                             process="@form"
+                             update=":formInventarios:dtInventarios :formInventarios:msgs"
+                             oncomplete="PF('dlgNuevoInv').hide()" />
+        </p:dialog>
+    </h:form>
+
+    <!-- ===== Dialog Editar ===== -->
+    <h:form id="formEditarInv">
+        <p:dialog header="Editar Inventario" widgetVar="dlgEditarInv" modal="true" closable="true">
+            <h:panelGrid id="dlgEditarGrid" columns="2" cellpadding="6">
+                <h:outputLabel value="ID:" />
+                <h:outputText value="#{inventarioBean.inventarioSeleccionado.inventarioId}" />
+
+                <h:outputLabel for="editCantidad" value="Cantidad:" />
+                <p:inputText id="editCantidad" value="#{inventarioBean.inventarioSeleccionado.cantidad}" required="true" />
+
+                <h:outputLabel for="editStock" value="Stock mínimo:" />
+                <p:inputNumber id="editStock" value="#{inventarioBean.inventarioSeleccionado.stockMinimo}" mode="decimal" />
+
+                <h:outputLabel for="editIngrediente" value="Ingrediente:" />
+                <p:selectOneMenu id="editIngrediente" value="#{inventarioBean.inventarioSeleccionado.ingredienteId}">
+                    <f:selectItems value="#{inventarioBean.ingredientes}" var="ing" itemValue="#{ing.codigo}" itemLabel="#{ing.nombre}" />
+                </p:selectOneMenu>
+
+                <h:outputLabel for="editAdmin" value="Administrador:" />
+                <p:selectOneMenu id="editAdmin" value="#{inventarioBean.inventarioSeleccionado.administradorId}">
+                    <f:selectItems value="#{inventarioBean.administradores}" var="adm" itemValue="#{adm.administradorId}" itemLabel="#{adm.administradorId}" />
+                </p:selectOneMenu>
+            </h:panelGrid>
+
+            <p:separator />
+            <p:commandButton value="Guardar" icon="pi pi-save"
+                             actionListener="#{inventarioBean.actualizarInventario}"
+                             process="@form"
+                             update=":formInventarios:dtInventarios :formInventarios:msgs"
+                             oncomplete="PF('dlgEditarInv').hide()" />
+        </p:dialog>
+    </h:form>
+
+</h:body>
+</html>

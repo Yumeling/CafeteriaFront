@@ -12,14 +12,20 @@ public class InventarioDTO {
 		super();
 	}
 	
-	public InventarioDTO(Integer cantidad, Integer administradorId, Integer ingredienteId, BigDecimal stockMinimo) {
+	
+	
+	public InventarioDTO(Integer inventarioId, Integer cantidad, Integer administradorId, Integer ingredienteId,
+			BigDecimal stockMinimo) {
 		super();
+		this.inventarioId = inventarioId;
 		this.cantidad = cantidad;
 		this.administradorId = administradorId;
 		this.ingredienteId = ingredienteId;
 		this.stockMinimo = stockMinimo;
 	}
-	
+
+
+
 	public Integer getAdministradorId() {
 		return administradorId;
 	}

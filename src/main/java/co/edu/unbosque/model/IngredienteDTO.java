@@ -1,61 +1,40 @@
 package co.edu.unbosque.model;
 
-import java.time.LocalDate;
-
 public class IngredienteDTO {
-	private Integer codigo;
-	private String nombre;
-	private Integer costoUnitario;
-	private LocalDate fechaCaducidad;
-	private String estado;
+    private Integer codigo;
+    private String nombre;
+    private Integer cantidad; // cantidad solicitada
+    private String estado;
+    private Integer costoUnitario; // agregado como pediste
 
-	public IngredienteDTO() {
-	}
+    public IngredienteDTO() { }
 
-	public IngredienteDTO(String nombre, Integer costoUnitario, LocalDate fechaCaducidad, String estado) {
-		super();
-		this.nombre = nombre;
-		this.costoUnitario = costoUnitario;
-		this.fechaCaducidad = fechaCaducidad;
-		this.estado = estado;
-	}
+    public IngredienteDTO(Integer codigo, String nombre, Integer cantidad, String estado, Integer costoUnitario) {
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.cantidad = cantidad;
+        this.estado = estado;
+        this.costoUnitario = costoUnitario;
+    }
 
-	public String getNombre() {
-		return nombre;
-	}
+    public Integer getCodigo() { return codigo; }
+    public void setCodigo(Integer codigo) { this.codigo = codigo; }
 
-	public void setNombre(String nombre) {
-		this.nombre = nombre;
-	}
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-	public Integer getCostoUnitario() {
-		return costoUnitario;
-	}
+    public Integer getCantidad() { return cantidad; }
+    public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
 
-	public void setCostoUnitario(Integer costoUnitario) {
-		this.costoUnitario = costoUnitario;
-	}
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-	public LocalDate getFechaCaducidad() {
-		return fechaCaducidad;
-	}
+    public Integer getCostoUnitario() { return costoUnitario; }
+    public void setCostoUnitario(Integer costoUnitario) { this.costoUnitario = costoUnitario; }
 
-	public void setFechaCaducidad(LocalDate fechaCaducidad) {
-		this.fechaCaducidad = fechaCaducidad;
-	}
-
-	public String getEstado() {
-		return estado;
-	}
-
-	public void setEstado(String estado) {
-		this.estado = estado;
-	}
-
-	@Override
-	public String toString() {
-		return "IngredienteDTO [codigo=" + codigo + ", nombre=" + nombre + ", costoUnitario=" + costoUnitario
-				+ ", fechaCaducidad=" + fechaCaducidad + ", estado=" + estado + "]";
-	}
-
+    @Override
+    public String toString() {
+        return "IngredienteDTO [codigo=" + codigo + ", nombre=" + nombre + ", cantidad=" + cantidad +
+                ", estado=" + estado + ", costoUnitario=" + costoUnitario + "]";
+    }
 }
