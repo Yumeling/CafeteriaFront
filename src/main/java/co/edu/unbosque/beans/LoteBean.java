@@ -1,15 +1,15 @@
 package co.edu.unbosque.beans;
 
 import java.io.Serializable;
-import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.JsonParser;
 
 import co.edu.unbosque.model.LoteDTO;
 import co.edu.unbosque.model.OrdenCompraDTO;
@@ -25,25 +25,25 @@ import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 
 /**
- * Bean para gestión de lotes. Basado en tu versión estable, corregido para:
- *  - mostrar proveedor usando los getters reales (primerNombre, etc.)
- *  - evitar conversiones erróneas en EL al formar cadenas
+ * LoteBean basado en tu modelo: usa ExternalHTTPRequestHandler y rutas sin /all.
+ * Mejoras:
+ *  - parseo robusto de JSON (arrays, wrapper { data: [...] }, o objeto único).
+ *  - mantiene cálculo y PUT de costo unitario ya funcional.
  */
 @Named("loteBean")
 @SessionScoped
 public class LoteBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private List<LoteDTO> lotes;
-    private LoteDTO nuevoLote;
+    private List<LoteDTO> lotes = new ArrayList<>();
+    private LoteDTO nuevoLote = new LoteDTO();
 
-    private List<OrdenCompraDTO> ordenes;
-    private List<IngredienteDTO> ingredientes;
-    private List<ProveedorDTO> proveedores;
+    private List<OrdenCompraDTO> ordenes = new ArrayList<>();
+    private List<IngredienteDTO> ingredientes = new ArrayList<>();
+    private List<ProveedorDTO> proveedores = new ArrayList<>();
 
     // vistas simples para presentar en los diálogos
-    private ProveedorView proveedorView;
-    private IngredienteView ingredienteView;
+    private ProveedorView proveedorView = new ProveedorView();
 
     private final String BASE_URL = "http://localhost:8083/api/lotes";
     private final String ORDEN_URL = "http://localhost:8083/api/ordenes";
@@ -56,16 +56,7 @@ public class LoteBean implements Serializable {
 
     @PostConstruct
     public void init() {
-        lotes = new ArrayList<>();
-        nuevoLote = new LoteDTO();
-
-        ordenes = new ArrayList<>();
-        ingredientes = new ArrayList<>();
-        proveedores = new ArrayList<>();
-
-        proveedorView = new ProveedorView();
-        ingredienteView = new IngredienteView();
-
+        prepararNuevoLote();
         cargarRecursos();
         cargarLotes();
     }
@@ -73,64 +64,144 @@ public class LoteBean implements Serializable {
     // ------------------ Carga recursos ------------------
 
     public void cargarRecursos() {
-        ordenes = tryFetchList(ORDEN_URL, new TypeToken<List<OrdenCompraDTO>>() {}.getType(), ordenes);
-        ingredientes = tryFetchList(ING_URL, new TypeToken<List<IngredienteDTO>>() {}.getType(), ingredientes);
-        proveedores = tryFetchList(PROV_URL, new TypeToken<List<ProveedorDTO>>() {}.getType(), proveedores);
+        cargarOrdenes();
+        cargarIngredientes();
+        cargarProveedores();
     }
 
-    private <T> List<T> tryFetchList(String baseUrl, Type typeOfT, List<T> fallback) {
-        String[] candidates = new String[] { baseUrl + "/all", baseUrl, baseUrl + "s", baseUrl + "es" };
-        for (String url : candidates) {
-            try {
-                String body = ExternalHTTPRequestHandler.doGet(url);
-                if (body == null) continue;
-                List<T> parsed = gson.fromJson(body, typeOfT);
-                if (parsed != null) return parsed;
-            } catch (Exception ex) {
-                System.out.println("tryFetchList: fallo en " + url + " -> " + ex.getMessage());
-            }
+    public void cargarOrdenes() {
+        try {
+            String body = ExternalHTTPRequestHandler.doGet(ORDEN_URL);
+            List<OrdenCompraDTO> list = parseListFromBody(body, OrdenCompraDTO.class);
+            ordenes = list != null ? list : new ArrayList<>();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ordenes = new ArrayList<>();
         }
-        return (fallback != null) ? fallback : new ArrayList<>();
+    }
+
+    public void cargarIngredientes() {
+        try {
+            String body = ExternalHTTPRequestHandler.doGet(ING_URL);
+            List<IngredienteDTO> list = parseListFromBody(body, IngredienteDTO.class);
+            ingredientes = list != null ? list : new ArrayList<>();
+        } catch (Exception e) {
+            e.printStackTrace();
+            ingredientes = new ArrayList<>();
+        }
+    }
+
+    public void cargarProveedores() {
+        try {
+            String body = ExternalHTTPRequestHandler.doGet(PROV_URL);
+            List<ProveedorDTO> list = parseListFromBody(body, ProveedorDTO.class);
+            proveedores = list != null ? list : new ArrayList<>();
+        } catch (Exception e) {
+            e.printStackTrace();
+            proveedores = new ArrayList<>();
+        }
     }
 
     public void cargarLotes() {
         try {
-            String body = ExternalHTTPRequestHandler.doGet(BASE_URL + "/all");
-            Type t = new TypeToken<List<LoteDTO>>() {}.getType();
-            List<LoteDTO> temp = gson.fromJson(body, t);
-            lotes = temp != null ? temp : new ArrayList<>();
+            String body = ExternalHTTPRequestHandler.doGet(BASE_URL);
+            List<LoteDTO> list = parseListFromBody(body, LoteDTO.class);
+            lotes = list != null ? list : new ArrayList<>();
         } catch (Exception e) {
             e.printStackTrace();
             lotes = new ArrayList<>();
         }
     }
 
+    /**
+     * Utilitario simple para manejar respuestas JSON que pueden ser:
+     *  - array: [ ... ]
+     *  - objeto con "data": { "data": [...] } o { "data": {...} }
+     *  - objeto único: { ... }  -> se envuelve en array
+     *
+     * Devuelve lista vacía si no hay nada parseable.
+     */
+    private <T> List<T> parseListFromBody(String body, Class<T> clazz) {
+        try {
+            if (body == null) return new ArrayList<>();
+            String trimmed = body.trim();
+            if (trimmed.isEmpty()) return new ArrayList<>();
+
+            // array directo
+            if (trimmed.startsWith("[")) {
+                java.lang.reflect.Type tt = com.google.gson.reflect.TypeToken.getParameterized(List.class, clazz).getType();
+                List<T> parsed = gson.fromJson(trimmed, tt);
+                return parsed != null ? parsed : new ArrayList<>();
+            }
+
+            // objeto
+            if (trimmed.startsWith("{")) {
+                JsonElement je = JsonParser.parseString(trimmed);
+                if (je.isJsonObject()) {
+                    JsonObject jo = je.getAsJsonObject();
+                    if (jo.has("data")) {
+                        JsonElement data = jo.get("data");
+                        if (data.isJsonArray()) {
+                            java.lang.reflect.Type tt = com.google.gson.reflect.TypeToken.getParameterized(List.class, clazz).getType();
+                            List<T> parsed = gson.fromJson(data.toString(), tt);
+                            return parsed != null ? parsed : new ArrayList<>();
+                        } else {
+                            // data es objeto único -> envolver en array
+                            String wrapped = "[" + data.toString() + "]";
+                            java.lang.reflect.Type tt = com.google.gson.reflect.TypeToken.getParameterized(List.class, clazz).getType();
+                            List<T> parsed = gson.fromJson(wrapped, tt);
+                            return parsed != null ? parsed : new ArrayList<>();
+                        }
+                    } else {
+                        // objeto único -> envolver
+                        String wrapped = "[" + trimmed + "]";
+                        java.lang.reflect.Type tt = com.google.gson.reflect.TypeToken.getParameterized(List.class, clazz).getType();
+                        List<T> parsed = gson.fromJson(wrapped, tt);
+                        return parsed != null ? parsed : new ArrayList<>();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // si falla, retornamos lista vacía en vez de lanzar
+            ex.printStackTrace();
+        }
+        return new ArrayList<>();
+    }
+
     // ------------------ Crear / Eliminar lote ------------------
 
     public void prepararNuevoLote() {
         nuevoLote = new LoteDTO();
+        // fechaRecepcion por defecto hoy
+        nuevoLote.setFechaRecepcion(LocalDate.now());
     }
 
     public void crearLote() {
         try {
+            // garantizar fechaRecepcion = hoy si no viene
             if (nuevoLote.getFechaRecepcion() == null) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "La fecha de recepción es obligatoria."));
-                return;
+                nuevoLote.setFechaRecepcion(LocalDate.now());
             }
+
+            // validaciones
             if (nuevoLote.getCantidad() == null || nuevoLote.getCantidad() <= 0) {
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "La cantidad debe ser mayor que 0."));
                 return;
             }
+            if (nuevoLote.getPrecio() == null || nuevoLote.getPrecio() < 0) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "El precio del lote es requerido y no puede ser negativo."));
+                return;
+            }
+            if (nuevoLote.getFechaCaducidad() != null && nuevoLote.getFechaCaducidad().isBefore(LocalDate.now())) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "La fecha de caducidad no puede ser anterior al día de hoy."));
+                return;
+            }
             if (nuevoLote.getCodigoIngrediente() == null) {
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Debe seleccionar un ingrediente."));
-                return;
-            }
-            if (nuevoLote.getPrecio() == null || nuevoLote.getPrecio() < 0) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "El precio del lote es requerido."));
                 return;
             }
 
@@ -143,9 +214,24 @@ public class LoteBean implements Serializable {
             j.addProperty("codigoIngrediente", nuevoLote.getCodigoIngrediente());
             if (nuevoLote.getProveedorId() != null) j.addProperty("proveedorId", nuevoLote.getProveedorId());
 
-            ExternalHTTPRequestHandler.doPost(BASE_URL + "/create", gson.toJson(j));
+            // crear lote (POST a /api/lotes)
+            ExternalHTTPRequestHandler.doPost(BASE_URL, gson.toJson(j));
+
+            // calcular costo unitario y actualizar ingrediente (PUT)
+            try {
+                if (nuevoLote.getCantidad() != null && nuevoLote.getCantidad() > 0 && nuevoLote.getPrecio() != null) {
+                    int costoUnitario = nuevoLote.getPrecio() / nuevoLote.getCantidad();
+                    JsonObject ingUpd = new JsonObject();
+                    ingUpd.addProperty("costoUnitario", costoUnitario);
+                    ExternalHTTPRequestHandler.doUpdate(ING_URL + "/" + nuevoLote.getCodigoIngrediente(), gson.toJson(ingUpd));
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
             prepararNuevoLote();
             cargarLotes();
+            cargarIngredientes(); // refrescar ingredientes para ver costo actualizado
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Lote creado"));
         } catch (Exception e) {
@@ -158,7 +244,7 @@ public class LoteBean implements Serializable {
     public void eliminarLote(Integer id) {
         try {
             if (id == null) return;
-            ExternalHTTPRequestHandler.doDelete(BASE_URL + "/delete/" + id);
+            ExternalHTTPRequestHandler.doDelete(BASE_URL + "/" + id);
             cargarLotes();
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Lote eliminado"));
@@ -169,34 +255,13 @@ public class LoteBean implements Serializable {
         }
     }
 
-    // ------------------ Preparar vistas para diálogos ------------------
-
-    public void prepararMostrarIngrediente(Integer codigo) {
-        ingredienteView = new IngredienteView();
-        if (codigo == null || ingredientes == null) return;
-        for (IngredienteDTO it : ingredientes) {
-            if (it != null && it.getCodigo() != null && it.getCodigo().equals(codigo)) {
-                ingredienteView.setCodigo(String.valueOf(it.getCodigo()));
-                ingredienteView.setNombre(it.getNombre() != null ? it.getNombre() : "—");
-                ingredienteView.setEstado(it.getEstado() != null ? it.getEstado() : "—");
-                // asume que tu DTO tiene getCostoUnitario o similar
-                try {
-                    Object cu = it.getCostoUnitario();
-                    ingredienteView.setCostoUnitario(cu != null ? String.valueOf(cu) : "—");
-                } catch (Throwable ex) {
-                    ingredienteView.setCostoUnitario("—");
-                }
-                break;
-            }
-        }
-    }
+    // ------------------ vistas auxiliares ----------------
 
     public void prepararMostrarProveedor(Integer proveedorId) {
         proveedorView = new ProveedorView();
         if (proveedorId == null || proveedores == null) return;
         for (ProveedorDTO p : proveedores) {
             if (p != null && p.getProveedorId() != null && p.getProveedorId().equals(proveedorId)) {
-                // nombre completo con comprobaciones simples
                 StringBuilder nombre = new StringBuilder();
                 if (p.getPrimerNombre() != null) nombre.append(p.getPrimerNombre());
                 if (p.getSegundoNombre() != null && !p.getSegundoNombre().isBlank()) {
@@ -218,14 +283,26 @@ public class LoteBean implements Serializable {
                 proveedorView.setNit(p.getNitEmpresa() != null ? String.valueOf(p.getNitEmpresa()) : "—");
                 proveedorView.setTelefono(p.getTelefono() != null ? String.valueOf(p.getTelefono()) : "—");
                 proveedorView.setEmail(p.getEmail() != null ? p.getEmail() : "—");
-                // si tu DTO no trae dirección, lo dejamos vacío o con "—"
                 proveedorView.setDireccion("—");
                 break;
             }
         }
     }
 
-    // ---------- getters / setters ----------
+    /**
+     * Devuelve el nombre del ingrediente según su código.
+     */
+    public String getIngredienteNombre(Integer codigo) {
+        if (codigo == null || ingredientes == null) return "—";
+        for (IngredienteDTO it : ingredientes) {
+            if (it != null && it.getCodigo() != null && it.getCodigo().equals(codigo)) {
+                return it.getNombre() != null ? it.getNombre() : "—";
+            }
+        }
+        return "—";
+    }
+
+    // ---------------- getters / setters ----------------
 
     public List<LoteDTO> getLotes() { return lotes; }
     public void setLotes(List<LoteDTO> lotes) { this.lotes = lotes; }
@@ -245,17 +322,13 @@ public class LoteBean implements Serializable {
     public ProveedorView getProveedorView() { return proveedorView; }
     public void setProveedorView(ProveedorView proveedorView) { this.proveedorView = proveedorView; }
 
-    public IngredienteView getIngredienteView() { return ingredienteView; }
-    public void setIngredienteView(IngredienteView ingredienteView) { this.ingredienteView = ingredienteView; }
-
     public String getBASE_URL() { return BASE_URL; }
     public String getORDEN_URL() { return ORDEN_URL; }
     public String getING_URL() { return ING_URL; }
     public String getPROV_URL() { return PROV_URL; }
     public Gson getGson() { return gson; }
 
-    // ------------------ vistas internas ------------------
-
+    // vistas internas
     public static class ProveedorView {
         private String proveedorId;
         private String nombre;
@@ -281,24 +354,5 @@ public class LoteBean implements Serializable {
 
         public String getDireccion() { return direccion; }
         public void setDireccion(String direccion) { this.direccion = direccion; }
-    }
-
-    public static class IngredienteView {
-        private String codigo;
-        private String nombre;
-        private String estado;
-        private String costoUnitario;
-
-        public String getCodigo() { return codigo; }
-        public void setCodigo(String codigo) { this.codigo = codigo; }
-
-        public String getNombre() { return nombre; }
-        public void setNombre(String nombre) { this.nombre = nombre; }
-
-        public String getEstado() { return estado; }
-        public void setEstado(String estado) { this.estado = estado; }
-
-        public String getCostoUnitario() { return costoUnitario; }
-        public void setCostoUnitario(String costoUnitario) { this.costoUnitario = costoUnitario; }
     }
 }

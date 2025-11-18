@@ -8,13 +8,29 @@ public class AdministradorDTO {
 		super();
 	}
 	
-	public AdministradorDTO(String nombreAdministrador, String clave) {
+
+	
+	public AdministradorDTO(Integer administradorId, String nombreAdministrador, String clave) {
 		super();
+		this.administradorId = administradorId;
 		this.nombreAdministrador = nombreAdministrador;
 		this.clave = clave;
 	}
 
-	
+
+
+	public Integer getAdministradorId() {
+		return administradorId;
+	}
+
+
+
+	public void setAdministradorId(Integer administradorId) {
+		this.administradorId = administradorId;
+	}
+
+
+
 	public String getNombreAdministrador() {
 		return nombreAdministrador;
 	}

@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+	<title>Gestión Reservas</title>
+</h:head>
+
+<h:body
+	style="background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh;">
+
+	<h:form id="loginForm"
+		style="width: 360px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+
+		<p:panel header="Iniciar Sesión"
+			style="text-align: center; margin-bottom: 15px;">
+
+			<p:messages id="messages" showDetail="true" closable="true"
+				style="margin-bottom: 15px;" />
+
+			<p:outputLabel for="username" value="Usuario:"
+				style="display: block; margin-bottom: 6px;" />
+			<h:panelGrid columns="2"
+				style="column-gap: 8px; align-items: center; margin-bottom: 10px;">
+				<h:outputText value="&#xf007;" styleClass="pi pi-user" />
+				<p:inputText id="username" value="#{validarIngreso.username}"
+					required="true" requiredMessage="El usuario es obligatorio"
+					placeholder="Ingresa tu usuario" style="width: 113%;" />
+			</h:panelGrid>
+			<p:message for="username" display="text" style="margin-bottom: 10px;" />
+
+			<p:outputLabel for="password" value="Contraseña:"
+				style="display: block; margin-bottom: 6px;" />
+			<h:panelGrid columns="2"
+				style="column-gap: 8px; align-items: center; margin-bottom: 15px;">
+				<h:outputText value="&#xf023;" styleClass="pi pi-lock" />
+				<p:password id="password" value="#{validarIngreso.password}"
+					required="true" requiredMessage="La contraseña es obligatoria"
+					toggleMask="true" feedback="false"
+					placeholder="Ingresa tu contraseña" />
+			</h:panelGrid>
+			<p:message for="password" display="text" style="margin-bottom: 20px;" />
+
+			<p:commandButton value="Ingresar" action="#{validarIngreso.login}"
+				update="loginForm messages" icon="pi pi-sign-in"
+				styleClass="ui-button-success" style="width: 100%;" />
+		</p:panel>
+
+	</h:form>
+
+</h:body>
+</html>

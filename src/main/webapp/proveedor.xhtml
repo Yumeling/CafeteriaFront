@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>Proveedores - Cafetería NamNam</title>
+    <style>
+        :root{ --bg:#f5f7fb; --card:#fff; --muted:#7f8c8d; --small:13px; }
+        body{ margin:0; font-family:'Segoe UI', Tahoma, Verdana, sans-serif; background:var(--bg); }
+        .container{ padding:1.25rem; }
+        .card{ background:var(--card); padding:1rem; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+        .header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+        .muted { color:var(--muted); font-size:var(--small); }
+    </style>
+</h:head>
+<h:body>
+    <!-- MAIN FORM: tabla y botones -->
+    <h:form id="mainForm">
+        <f:event type="preRenderView" listener="#{proveedorBean.cargarProveedores}" />
+
+        <div class="container">
+            <div class="card">
+                <div class="header">
+                    <div>
+                        <h2>Proveedores</h2>
+                        <small class="muted">Total: <strong>#{proveedorBean.proveedores.size()}</strong></small>
+                    </div>
+                    <div>
+                        <p:messages id="msgs" autoUpdate="true" showDetail="true" showSummary="false" closable="true" />
+                        <p:commandButton icon="pi pi-refresh" title="Refrescar"
+                                         actionListener="#{proveedorBean.cargarProveedores}" process="@this"
+                                         update=":mainForm:dtProveedores :mainForm:msgs" ajax="true" />
+
+                        <p:commandButton value="➕ Nuevo Proveedor" icon="pi pi-plus"
+                                         actionListener="#{proveedorBean.prepararNuevo}"
+                                         process="@this"
+                                         update=":formCrear:gridNuevo :mainForm:msgs"
+                                         oncomplete="PF('dlgNuevoProveedor').show()" ajax="true" />
+                    </div>
+                </div>
+
+                <p:dataTable id="dtProveedores" value="#{proveedorBean.proveedores}" var="p"
+                             paginator="true" rows="10" responsiveLayout="scroll" emptyMessage="No hay proveedores"
+                             style="width:100%">
+
+                    <p:column headerText="ID" style="width:80px; text-align:center;">
+                        <h:outputText value="#{p.proveedorId}" />
+                    </p:column>
+
+                    <p:column headerText="Empresa (NIT)" style="width:140px; text-align:left;">
+                        <h:outputText value="#{p.nitEmpresa != null ? p.nitEmpresa : '-'}" />
+                    </p:column>
+
+                    <p:column headerText="Nombre" style="text-align:left;">
+                        <h:outputText value="#{p.primerNombre} #{p.segundoNombre} #{p.primerApellido} #{p.segundoApellido}" />
+                    </p:column>
+
+                    <p:column headerText="Email" style="width:220px; text-align:left;">
+                        <h:outputText value="#{p.email}" />
+                    </p:column>
+
+                    <p:column headerText="Teléfono" style="width:140px; text-align:center;">
+                        <h:outputText value="#{p.telefono != null ? p.telefono : '-'}" />
+                    </p:column>
+
+                    <p:column headerText="Cargo" style="width:160px; text-align:left;">
+                        <h:outputText value="#{p.cargo}" />
+                    </p:column>
+
+                    <p:column headerText="Acciones" style="width:200px; text-align:center;">
+                        <p:commandButton icon="pi pi-pencil" title="Editar"
+                                         actionListener="#{proveedorBean.prepararEditar(p)}"
+                                         process="@this"
+                                         update=":formEditar:gridEditar :mainForm:msgs"
+                                         oncomplete="PF('dlgEditarProveedor').show()" styleClass="ui-button-warning" ajax="true"/>
+                    </p:column>
+
+                </p:dataTable>
+            </div>
+        </div>
+    </h:form>
+
+    <!-- FORM CREAR (separado) -->
+    <h:form id="formCrear">
+        <p:dialog header="Crear Proveedor" widgetVar="dlgNuevoProveedor" modal="true" closable="true" width="640" appendTo="@form">
+            <h:panelGrid id="gridNuevo" columns="2" cellpadding="6">
+                <h:outputLabel for="newPrimerNombre" value="Primer nombre*" />
+                <p:inputText id="newPrimerNombre" value="#{proveedorBean.nuevoProveedor.primerNombre}" required="true" />
+
+                <h:outputLabel for="newSegundoNombre" value="Segundo nombre" />
+                <p:inputText id="newSegundoNombre" value="#{proveedorBean.nuevoProveedor.segundoNombre}" />
+
+                <h:outputLabel for="newPrimerApellido" value="Primer apellido*" />
+                <p:inputText id="newPrimerApellido" value="#{proveedorBean.nuevoProveedor.primerApellido}" required="true" />
+
+                <h:outputLabel for="newSegundoApellido" value="Segundo apellido" />
+                <p:inputText id="newSegundoApellido" value="#{proveedorBean.nuevoProveedor.segundoApellido}" />
+
+                <h:outputLabel for="newEmail" value="Email" />
+                <p:inputText id="newEmail" value="#{proveedorBean.nuevoProveedor.email}" />
+
+                <h:outputLabel for="newTelefono" value="Teléfono" />
+                <p:inputMask id="newTelefono" mask="9999999999" value="#{proveedorBean.nuevoProveedor.telefono}" />
+
+                <h:outputLabel for="newCargo" value="Cargo" />
+                <p:inputText id="newCargo" value="#{proveedorBean.nuevoProveedor.cargo}" />
+
+                <h:outputLabel for="newEmpresa" value="Empresa (NIT)" />
+                <p:selectOneMenu id="newEmpresa" value="#{proveedorBean.selectedEmpresaNit}">
+                    <f:selectItem itemLabel="-- Ninguna --" itemValue="#{null}" />
+                    <f:selectItems value="#{proveedorBean.empresas}" var="e"
+                                   itemValue="#{e.nit}" itemLabel="#{e.nombre} (#{e.nit})" />
+                </p:selectOneMenu>
+            </h:panelGrid>
+
+            <p:separator />
+            <div style="text-align:right;">
+                <p:commandButton value="Guardar" icon="pi pi-save"
+                                 actionListener="#{proveedorBean.crearProveedor}"
+                                 process="@form"
+                                 update=":mainForm:dtProveedores :mainForm:msgs"
+                                 oncomplete="PF('dlgNuevoProveedor').hide()" styleClass="ui-button-success" ajax="true" />
+            </div>
+        </p:dialog>
+    </h:form>
+
+    <!-- FORM EDITAR (separado) -->
+    <h:form id="formEditar">
+        <p:dialog header="Editar Proveedor" widgetVar="dlgEditarProveedor" modal="true" closable="true" width="640" appendTo="@form">
+            <h:panelGrid id="gridEditar" columns="2" cellpadding="6">
+                <h:outputLabel value="ID:" />
+                <h:outputText value="#{proveedorBean.proveedorSeleccionado.proveedorId}" />
+
+                <h:outputLabel for="editPrimerNombre" value="Primer nombre*" />
+                <p:inputText id="editPrimerNombre" value="#{proveedorBean.proveedorSeleccionado.primerNombre}" required="true" />
+
+                <h:outputLabel for="editSegundoNombre" value="Segundo nombre" />
+                <p:inputText id="editSegundoNombre" value="#{proveedorBean.proveedorSeleccionado.segundoNombre}" />
+
+                <h:outputLabel for="editPrimerApellido" value="Primer apellido*" />
+                <p:inputText id="editPrimerApellido" value="#{proveedorBean.proveedorSeleccionado.primerApellido}" required="true" />
+
+                <h:outputLabel for="editSegundoApellido" value="Segundo apellido" />
+                <p:inputText id="editSegundoApellido" value="#{proveedorBean.proveedorSeleccionado.segundoApellido}" />
+
+                <h:outputLabel for="editEmail" value="Email" />
+                <p:inputText id="editEmail" value="#{proveedorBean.proveedorSeleccionado.email}" />
+
+                <h:outputLabel for="editTelefono" value="Teléfono" />
+                <p:inputMask id="editTelefono" mask="9999999999" value="#{proveedorBean.proveedorSeleccionado.telefono}" />
+
+                <h:outputLabel for="editCargo" value="Cargo" />
+                <p:inputText id="editCargo" value="#{proveedorBean.proveedorSeleccionado.cargo}" />
+
+                <h:outputLabel for="editEmpresa" value="Empresa (NIT)" />
+                <p:selectOneMenu id="editEmpresa" value="#{proveedorBean.selectedEmpresaNit}">
+                    <f:selectItem itemLabel="-- Ninguna --" itemValue="#{null}" />
+                    <f:selectItems value="#{proveedorBean.empresas}" var="e"
+                                   itemValue="#{e.nit}" itemLabel="#{e.nombre} (#{e.nit})" />
+                </p:selectOneMenu>
+            </h:panelGrid>
+
+            <p:separator />
+            <div style="text-align:right;">
+                <p:commandButton value="Guardar cambios" icon="pi pi-save"
+                                 actionListener="#{proveedorBean.actualizarProveedor}"
+                                 process="@form"
+                                 update=":mainForm:dtProveedores :mainForm:msgs"
+                                 oncomplete="PF('dlgEditarProveedor').hide()" styleClass="ui-button-success" ajax="true" />
+            </div>
+        </p:dialog>
+    </h:form>
+</h:body>
+</html>

@@ -46,7 +46,7 @@ public class IngredienteBean implements Serializable {
     // inicializa DTO para el diálogo de creación (NO pide cantidad ni costo)
     public void prepararNuevo() {
         nuevoIngrediente = new IngredienteDTO();
-        // NO seteamos cantidad ni costoUnitario aquí: que permanezcan null para no enviarlos al backend
+        // NO seteamos cantidad aquí para que permanezca null si no se quiere enviar
     }
 
     public void cargarIngredientes() {
@@ -91,11 +91,12 @@ public class IngredienteBean implements Serializable {
                 return;
             }
 
-            // NO enviar cantidad ni costoUnitario en la creación: se dejan null (Gson por defecto omite nulls)
+            // Forzar estado y valores por defecto: NO enviar codigo, inicializar costoUnitario en 0
             nuevoIngrediente.setEstado("disponible");
             nuevoIngrediente.setCodigo(null);
             nuevoIngrediente.setCantidad(null);
-            nuevoIngrediente.setCostoUnitario(null);
+            // **INICIALIZAMOS costoUnitario a 0 para evitar nulls**
+            nuevoIngrediente.setCostoUnitario(0);
 
             String json = gson.toJson(nuevoIngrediente);
             HttpRequest req = HttpRequest.newBuilder()
