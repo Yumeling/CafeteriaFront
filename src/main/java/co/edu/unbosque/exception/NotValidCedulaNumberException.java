@@ -1,10 +1,6 @@
 package co.edu.unbosque.exception;
 
 public class NotValidCedulaNumberException extends Exception {
-
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public NotValidCedulaNumberException() {

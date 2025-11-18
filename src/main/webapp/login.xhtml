@@ -1,52 +1,199 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
-                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:h="http://xmlns.jcp.org/jsf/html"
-	xmlns:p="http://primefaces.org/ui"
-	xmlns:f="http://xmlns.jcp.org/jsf/core">
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
 
 <h:head>
 	<title>Gestión Reservas</title>
+
+	<style>
+@charset "UTF-8";
+
+:root {
+	--floral-white: #fff9f0;
+	--soft-apricot: #ffe1c6;
+	--vanilla-custard: #fff7ae;
+	--pastel-petal: #ffc6d9;
+	--light-bronze: #d3a288;
+	--font-primary: "Poppins", sans-serif;
+	--font-secondary: "Nunito", sans-serif;
+	--soft-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	background-color: var(--floral-white);
+	font-family: var(--font-primary);
+	color: var(--light-bronze);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+.top-header {
+	width: 100%;
+	padding: 20px;
+	background: var(--soft-apricot);
+	border-bottom: 2px solid var(--light-bronze);
+	box-shadow: var(--soft-shadow);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 25px;
+}
+
+.top-header img {
+	width: 70px;
+	height: 70px;
+	object-fit: contain;
+}
+
+.top-header-title {
+	font-size: 26px;
+	font-weight: 700;
+	color: var(--light-bronze);
+}
+
+#loginForm {
+	background: var(--soft-apricot) !important;
+	border: 1px solid var(--light-bronze) !important;
+	border-radius: 16px !important;
+	box-shadow: var(--soft-shadow) !important;
+}
+
+.ui-panel {
+	background: var(--floral-white) !important;
+	border-radius: 12px !important;
+	border: 1px solid var(--light-bronze) !important;
+}
+
+.ui-panel-title {
+	font-weight: 700 !important;
+	color: var(--light-bronze) !important;
+	font-size: 20px !important;
+	font-family: var(--font-primary) !important;
+}
+
+.ui-inputfield {
+	width: 100% !important;
+	padding: 10px !important;
+	border-radius: 10px !important;
+	border: 1px solid var(--light-bronze) !important;
+}
+
+.ui-inputfield:focus {
+	border-color: var(--pastel-petal) !important;
+	box-shadow: 0 0 6px rgba(255, 198, 217, 0.7) !important;
+}
+
+.ui-button, .ui-button-success {
+	background-color: var(--pastel-petal) !important;
+	border: 1px solid var(--light-bronze) !important;
+	border-radius: 10px !important;
+	font-weight: 600 !important;
+	color: var(--light-bronze) !important;
+	transition: 0.25s ease !important;
+}
+
+.ui-button:hover {
+	background-color: var(--vanilla-custard) !important;
+}
+
+.ui-messages {
+	position: relative;
+}
+
+.ui-messages .ui-messages-close {
+	position: absolute !important;
+	top: 1px !important;
+	left: 1px !important;
+	margin: 0 !important;
+}
+
+.ui-messages>div, .ui-message>div {
+	padding: 16px 20px !important;
+	border-radius: 12px !important;
+	box-shadow: var(--soft-shadow) !important;
+	margin-bottom: 12px !important;
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	line-height: 1.4;
+}
+
+.ui-messages-info {
+	background-color: #e8f4ff !important;
+	border-left: 6px solid #74b9ff !important;
+	color: #2d6aaa !important;
+}
+
+.ui-messages-warn {
+	background-color: #fff8d8 !important;
+	border-left: 6px solid #f4c542 !important;
+	color: #8a6d1f !important;
+}
+
+.ui-messages-error {
+	background-color: #ffe5e5 !important;
+	border-left: 6px solid #ff6b6b !important;
+	color: #c0392b !important;
+}
+
+.ui-messages-success {
+	background-color: #eaffea !important;
+	border-left: 6px solid #7bd67b !important;
+	color: #2e7d32 !important;
+}
+</style>
 </h:head>
 
 <h:body
-	style="background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh;">
+	style="display: flex; flex-direction: column; align-items: center;">
 
-	<h:form id="loginForm"
-		style="width: 360px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+	<div class="top-header">
+		<img src="resources/img/logo.png" alt="Logo Cafetería" /> <span
+			class="top-header-title">Sistema de Gestión de Suministro —
+			Cafetería Ñam Ñam</span>
+	</div>
+
+	<h:form id="loginForm" style="width: 360px; padding: 20px;">
 
 		<p:panel header="Iniciar Sesión"
-			style="text-align: center; margin-bottom: 15px;">
+			style="text-align:center; margin-bottom:15px;">
 
 			<p:messages id="messages" showDetail="true" closable="true"
 				style="margin-bottom: 15px;" />
 
 			<p:outputLabel for="username" value="Usuario:"
-				style="display: block; margin-bottom: 6px;" />
+				style="display:block; margin-bottom:6px;" />
 			<h:panelGrid columns="2"
-				style="column-gap: 8px; align-items: center; margin-bottom: 10px;">
+				style="column-gap: 8px; align-items:center; margin-bottom:10px;">
 				<h:outputText value="&#xf007;" styleClass="pi pi-user" />
 				<p:inputText id="username" value="#{validarIngreso.username}"
 					required="true" requiredMessage="El usuario es obligatorio"
-					placeholder="Ingresa tu usuario" style="width: 113%;" />
+					placeholder="Ingresa tu usuario" />
 			</h:panelGrid>
-			<p:message for="username" display="text" style="margin-bottom: 10px;" />
+			<p:message for="username" display="text" style="margin-bottom:10px;" />
 
 			<p:outputLabel for="password" value="Contraseña:"
-				style="display: block; margin-bottom: 6px;" />
+				style="display:block; margin-bottom:6px;" />
 			<h:panelGrid columns="2"
-				style="column-gap: 8px; align-items: center; margin-bottom: 15px;">
+				style="column-gap: 8px; align-items:center; margin-bottom:15px;">
 				<h:outputText value="&#xf023;" styleClass="pi pi-lock" />
 				<p:password id="password" value="#{validarIngreso.password}"
 					required="true" requiredMessage="La contraseña es obligatoria"
 					toggleMask="true" feedback="false"
 					placeholder="Ingresa tu contraseña" />
 			</h:panelGrid>
-			<p:message for="password" display="text" style="margin-bottom: 20px;" />
+			<p:message for="password" display="text" style="margin-bottom:20px;" />
 
 			<p:commandButton value="Ingresar" action="#{validarIngreso.login}"
 				update="loginForm messages" icon="pi pi-sign-in"
-				styleClass="ui-button-success" style="width: 100%;" />
+				styleClass="ui-button-success" style="width:100%;" />
 		</p:panel>
 
 	</h:form>

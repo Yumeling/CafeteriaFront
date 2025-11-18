@@ -3,17 +3,16 @@ package co.edu.unbosque.model;
 import java.math.BigDecimal;
 
 public class InventarioDTO {
-    private Integer inventarioId;
-    private Integer cantidad;
-    private Integer administradorId;
-    private Integer ingredienteId;
-    private BigDecimal stockMinimo;
+	private Integer inventarioId;
+	private Integer cantidad;
+	private Integer administradorId;
+	private Integer ingredienteId;
+	private BigDecimal stockMinimo;
+
 	public InventarioDTO() {
 		super();
 	}
-	
-	
-	
+
 	public InventarioDTO(Integer inventarioId, Integer cantidad, Integer administradorId, Integer ingredienteId,
 			BigDecimal stockMinimo) {
 		super();
@@ -24,8 +23,6 @@ public class InventarioDTO {
 		this.stockMinimo = stockMinimo;
 	}
 
-
-
 	public Integer getAdministradorId() {
 		return administradorId;
 	}
@@ -33,7 +30,6 @@ public class InventarioDTO {
 	public void setAdministradorId(Integer administradorId) {
 		this.administradorId = administradorId;
 	}
-
 
 	public Integer getInventarioId() {
 		return inventarioId;
@@ -72,6 +68,5 @@ public class InventarioDTO {
 		return "InventarioDTO [inventarioId=" + inventarioId + ", cantidad=" + cantidad + ", administradorId="
 				+ administradorId + ", ingredienteId=" + ingredienteId + ", stockMinimo=" + stockMinimo + "]";
 	}
-	
-    
+
 }

@@ -1,23 +1,12 @@
-/**
- * Esta la clase Util, en la cual creamos nuestras excepciones propias, para poder limitar los errores que pueda generar el usuario.
- */
 package co.edu.unbosque.exception;
 
-import java.util.regex.Matcher; // Quien busca si hay similitud
-import java.util.regex.Pattern;//Nos da el patron a buscar
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-
-
-
-/**
- * Clase utilitaria para verificar la validez de entradas de datos y lanzar
- * excepciones personalizadas.
- */
 public class ExceptionChecker {
-	
+
 	public static void notValidPasswordException(String pass) throws NotValidPasswordException {
-		
-		
+
 		if (pass == null || pass.isEmpty()) {
 			throw new NotValidPasswordException();
 		}
@@ -49,7 +38,6 @@ public class ExceptionChecker {
 		}
 	}
 
-
 	public static void notValidStringInputException(String txt) throws NotValidStringInputException {
 		if (txt == null || txt.isEmpty()) {
 			throw new NotValidStringInputException();
@@ -61,18 +49,18 @@ public class ExceptionChecker {
 			throw new NotValidStringInputException();
 		}
 	}
-	
+
 	public static void notValidCedulaNumberException(String phoneNumber) throws NotValidCedulaNumberException {
 		if (phoneNumber == null || phoneNumber.isEmpty()) {
 			throw new NotValidCedulaNumberException();
 		}
-		String regex = "^[0-9]{7,15}$"; 
+		String regex = "^[0-9]{7,15}$";
 
 		if (!Pattern.matches(regex, phoneNumber)) {
 			throw new NotValidCedulaNumberException();
 		}
 	}
-	
+
 	public static void notValidStringIntException(String text) throws NotValidStringIntException {
 		if (text == null || text.isEmpty()) {
 			throw new NotValidStringIntException();
@@ -84,6 +72,5 @@ public class ExceptionChecker {
 			throw new NotValidStringIntException();
 		}
 	}
-	
-	
+
 }

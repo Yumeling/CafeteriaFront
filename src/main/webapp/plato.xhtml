@@ -1,166 +1,434 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://xmlns.jcp.org/jsf/core">
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://xmlns.jcp.org/jsf/core">
 <h:head>
-    <title>Platos - Cafetería NamNam</title>
-    <style>
-        :root{ --bg:#f5f7fb; --card:#fff; --muted:#7f8c8d; --small:13px; }
-        body{ margin:0; font-family:'Segoe UI', Tahoma, Verdana, sans-serif; background:var(--bg); }
-        .container{ padding:1.25rem; }
-        .card{ background:var(--card); padding:1rem; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-        .header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
-        .muted { color:var(--muted); font-size:var(--small); }
-        .thumb { max-width:80px; max-height:60px; border-radius:6px; object-fit:cover; }
-    </style>
+	<title>Platos - Cafetería NamNam</title>
+	<style>
+@charset "UTF-8";
+
+:root {
+	--floral-white: #fff9f0;
+	--soft-apricot: #ffe1c6;
+	--vanilla-custard: #fff7ae;
+	--pastel-petal: #ffc6d9;
+	--light-bronze: #d3a288;
+	--font-primary: "Poppins", sans-serif;
+	--font-secondary: "Nunito", sans-serif;
+	--soft-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	background-color: var(--floral-white);
+	font-family: var(--font-primary);
+	color: var(--light-bronze);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: 260px 1fr;
+	min-height: 100vh;
+	padding: 1rem;
+	gap: 1rem;
+}
+
+.sidebar {
+	background-color: var(--soft-apricot);
+	border: 1px solid var(--light-bronze);
+	border-radius: 16px;
+	padding: 2rem 1rem;
+	box-shadow: var(--soft-shadow);
+	color: var(--light-bronze);
+}
+
+.sidebar h2 {
+	font-family: var(--font-primary);
+	font-weight: 700;
+	margin-top: 0;
+}
+
+.sidebar p {
+	font-family: var(--font-secondary);
+	margin-bottom: 1rem;
+}
+
+.ui-menu .ui-menuitem-link {
+	background: var(--floral-white) !important;
+	border-radius: 10px !important;
+	margin: 4px 0 !important;
+	padding: 10px 12px !important;
+	color: var(--light-bronze) !important;
+	font-weight: 600;
+	transition: 0.25s ease;
+}
+
+.ui-menu .ui-menuitem-link:hover {
+	background: var(--pastel-petal) !important;
+}
+
+.header-card, .table-card {
+	background: var(--soft-apricot);
+	border: 1px solid var(--light-bronze);
+	border-radius: 16px;
+	padding: 1.25rem;
+	box-shadow: var(--soft-shadow);
+}
+
+.header-card {
+	margin-bottom: 1rem;
+}
+
+.page-title {
+	margin: 0;
+	color: var(--light-bronze);
+	font-size: 26px;
+	font-weight: 700;
+}
+
+.section-title {
+	margin-top: .25rem;
+	font-size: 14px;
+	color: var(--light-bronze);
+}
+
+.btn, .ui-button, .ui-button-success, .ui-button-danger {
+	background-color: var(--pastel-petal) !important;
+	border: 1px solid var(--light-bronze) !important;
+	border-radius: 10px !important;
+	color: var(--light-bronze) !important;
+	font-weight: 600 !important;
+	transition: 0.25s ease !important;
+}
+
+.ui-button:hover, .btn:hover {
+	background-color: var(--vanilla-custard) !important;
+}
+
+.compact-table .ui-datatable-tablewrapper {
+	overflow-x: auto;
+}
+
+.compact-table .ui-datatable-thead>tr>th, .compact-table .ui-datatable-tbody>tr>td
+	{
+	background: var(--floral-white) !important;
+	border: 1px solid var(--soft-apricot) !important;
+	padding: 0.6rem;
+	font-family: var(--font-secondary);
+	font-size: 14px;
+	color: var(--light-bronze);
+}
+
+.compact-table .small-muted {
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+@media ( max-width : 900px) {
+	.layout {
+		grid-template-columns: 1fr;
+	}
+	.sidebar {
+		display: none;
+	}
+	.hide-on-mobile {
+		display: none !important;
+	}
+}
+
+.ui-messages {
+	position: relative;
+}
+
+.ui-messages .ui-messages-close {
+	position: absolute !important;
+	top: 1px !important;
+	right: auto !important;
+	left: 1px !important;
+	margin: 0 !important;
+}
+
+.ui-messages, .ui-message {
+	width: 100%;
+	margin: 12px 0 !important;
+}
+
+.ui-messages>div, .ui-message>div {
+	padding: 16px 20px !important;
+	border-radius: 12px !important;
+	box-shadow: var(--soft-shadow) !important;
+	margin-bottom: 12px !important;
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	line-height: 1.4;
+}
+
+.ui-messages>div .ui-messages-icon, .ui-message>div .ui-message-icon {
+	margin-right: 10px !important;
+	font-size: 1.3rem !important;
+}
+
+.ui-messages>div .ui-messages-info-summary, .ui-messages>div .ui-messages-warn-summary,
+	.ui-messages>div .ui-messages-error-summary, .ui-messages>div .ui-messages-fatal-summary,
+	.ui-message .ui-message-info-summary, .ui-message .ui-message-error-summary
+	{
+	font-weight: bold !important;
+	margin-bottom: 4px !important;
+	display: block;
+}
+
+.ui-messages-info, .ui-message-info {
+	background-color: #e8f4ff !important;
+	border-left: 6px solid #74b9ff !important;
+	color: #2d6aaa !important;
+}
+
+.ui-messages-warn, .ui-message-warn {
+	background-color: #fff8d8 !important;
+	border-left: 6px solid #f4c542 !important;
+	color: #8a6d1f !important;
+}
+
+.ui-messages-error, .ui-message-error {
+	background-color: #ffe5e5 !important;
+	border-left: 6px solid #ff6b6b !important;
+	color: #c0392b !important;
+}
+
+.ui-messages-success, .ui-message-success {
+	background-color: #eaffea !important;
+	border-left: 6px solid #7bd67b !important;
+	color: #2e7d32 !important;
+}
+
+.ui-messages ul {
+	margin: 0 !important;
+	padding-left: 0 !important;
+}
+
+.ui-messages li {
+	list-style: none !important;
+	margin-bottom: 6px !important;
+}
+
+.titulo-logo {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 24px;
+	font-weight: bold;
+}
+
+.logo-img {
+	width: 70px;
+	height: 70px;
+	object-fit: contain;
+}
+
+.thumb {
+	width: 70px !important;
+	height: 70px !important;
+	object-fit: cover !important;
+	border-radius: 10px;
+	border: 1px solid var(--soft-apricot);
+	box-shadow: var(--soft-shadow);
+	background-color: #fff;
+}
+</style>
 </h:head>
 <h:body>
-    <h:form id="mainForm">
-        <f:event type="preRenderView" listener="#{platoBean.cargarPlatos}" />
+	<h:form id="mainForm">
+		<f:event type="preRenderView" listener="#{platoBean.cargarPlatos}" />
 
-        <div class="container">
-            <div class="card">
-                <div class="header">
-                    <div>
-                        <h2>Platos</h2>
-                        <small class="muted">Total: <strong>#{platoBean.platos.size()}</strong></small>
-                    </div>
-                    <div>
-                        <p:messages id="msgs" autoUpdate="true" showDetail="true" showSummary="false" closable="true" />
-                        <p:commandButton icon="pi pi-refresh" title="Refrescar"
-                                         actionListener="#{platoBean.cargarPlatos}" process="@this"
-                                         update="@form" ajax="true" />
-                        <p:commandButton value="➕ Nuevo desde Receta" icon="pi pi-plus"
-                                         actionListener="#{platoBean.prepararNuevoPlato}"
-                                         process="@this"
-                                         update="@form"
-                                         oncomplete="PF('dlgNuevoPlato').show()" ajax="true" />
-                        <p:commandButton value="🧩 Generar todos desde recetas" icon="pi pi-play"
-                                         title="Crea un plato por cada receta que no tenga uno"
-                                         actionListener="#{platoBean.generarPlatosDesdeRecetas}"
-                                         process="@this"
-                                         update="@form"
-                                         styleClass="ui-button-secondary" ajax="true" />
-                    </div>
-                </div>
+		<div class="layout">
+			<div class="sidebar">
+				<h2 class="titulo-logo">
+					<img src="resources/img/logo.png" alt="Logo" class="logo-img" />
+					Ñam Ñam
+				</h2>
+				<p>Panel de Administración</p>
+				<p:menu styleClass="menu-vertical">
+					<p:menuitem value="Órdenes de Compra" url="principal.xhtml"
+						icon="pi pi-shopping-cart" />
+					<p:menuitem value="Lote" url="lote.xhtml" icon="pi pi-box" />
+					<p:menuitem value="Ingredientes" url="ingrediente.xhtml"
+						icon="pi pi-apple" />
+					<p:menuitem value="Inventario" url="inventario.xhtml"
+						icon="pi pi-tags" />
+					<p:menuitem value="Recetas" url="receta.xhtml" icon="pi pi-book" />
+					<p:menuitem value="Platos" url="plato.xhtml" icon="pi pi-th-large" />
+					<p:menuitem value="Empresas Proveedoras" url="empresa.xhtml"
+						icon="pi pi-building" />
+					<p:menuitem value="Proveedores Asociados" url="proveedor.xhtml"
+						icon="pi pi-truck" />
+				</p:menu>
+			</div>
+			<div class="main">
+				<div class="header-card">
+					<div class="header-left">
+						<h1 class="page-title">Platos</h1>
+						<p class="section-title">Gestión de platos</p>
+					</div>
 
-                <p:dataTable id="dtPlatos" value="#{platoBean.platos}" var="p"
-                             paginator="true" rows="10" responsiveLayout="scroll" emptyMessage="No hay platos"
-                             style="width:100%">
+					<div class="header-right">
+						<p:commandButton value="Cerrar Sesión" icon="pi pi-sign-out"
+							action="#{validarIngreso.logout}" styleClass="logout-btn"
+							process="@this" />
+					</div>
+				</div>
 
-                    <p:column headerText="ID" style="width:80px; text-align:center;">
-                        <h:outputText value="#{p.platoId}" />
-                    </p:column>
 
-                    <p:column headerText="Imagen" style="width:110px; text-align:center;">
-                        <h:panelGroup>
-                            <h:outputLink value="#{p.imagen}" target="_blank">
-                                <h:graphicImage value="#{p.imagen}" styleClass="thumb"
-                                                rendered="#{not empty p.imagen and (p.imagen.endsWith('jpg') or p.imagen.endsWith('png'))}" />
-                                <h:outputText value="Ver"
-                                              rendered="#{empty p.imagen or (not p.imagen.endsWith('jpg') and not p.imagen.endsWith('png'))}" />
-                            </h:outputLink>
-                        </h:panelGroup>
-                    </p:column>
+				<div class="table-card">
+					<div
+						style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+						<div>
+							<h3 style="margin: 0">Listado de platos</h3>
+							<small class="muted">Total: <strong>#{platoBean.platos.size()}</strong></small>
+						</div>
+						<div>
+							<p:messages id="msgs" autoUpdate="true" showDetail="true"
+								showSummary="false" closable="true" />
+							<p:commandButton icon="pi pi-refresh" title="Refrescar"
+								actionListener="#{platoBean.cargarPlatos}" process="@this"
+								update="@form" ajax="true" />
+							<p:commandButton value="Generar todos desde recetas"
+								icon="pi pi-play"
+								title="Crea un plato por cada receta que no tenga uno"
+								actionListener="#{platoBean.generarPlatosDesdeRecetas}"
+								process="@this" update="@form" styleClass="ui-button-secondary"
+								ajax="true" />
+						</div>
+					</div>
 
-                    <p:column headerText="Nombre" style="text-align:left;">
-                        <h:outputText value="#{p.nombre}" />
-                    </p:column>
+					<p:dataTable id="dtPlatos" value="#{platoBean.platos}" var="p"
+						paginator="true" rows="10" responsiveLayout="scroll"
+						emptyMessage="No hay platos" style="width:100%">
 
-                    <p:column headerText="Costo" style="width:140px; text-align:right;">
-                        <h:outputText value="#{p.costo != null ? p.costo : 0}" />
-                    </p:column>
+						<p:column headerText="ID" style="width:80px; text-align:center;">
+							<h:outputText value="#{p.platoId}" />
+						</p:column>
 
-                    <p:column headerText="Precio venta" style="width:160px; text-align:right;">
-                        <h:outputText value="#{p.precioVenta != null ? p.precioVenta : 0}" />
-                    </p:column>
+						<p:column headerText="Imagen"
+							style="width:110px; text-align:center;">
+							<h:panelGroup>
+								<h:outputLink value="#{p.imagen}" target="_blank">
+									<h:graphicImage value="#{p.imagen}" styleClass="thumb"
+										rendered="#{not empty p.imagen and (p.imagen.endsWith('jpg') or p.imagen.endsWith('png'))}" />
+									<h:outputText value="Ver"
+										rendered="#{empty p.imagen or (not p.imagen.endsWith('jpg') and not p.imagen.endsWith('png'))}" />
+								</h:outputLink>
+							</h:panelGroup>
+						</p:column>
 
-                    <p:column headerText="Acciones" style="width:260px; text-align:center;">
-                        <p:commandButton icon="pi pi-search" title="Ver detalle"
-                                         actionListener="#{platoBean.verDetalles(p)}"
-                                         process="@this"
-                                         update="@form"
-                                         oncomplete="PF('dlgDetalle').show()" styleClass="ui-button-info" ajax="true"/>
+						<p:column headerText="Nombre" style="width:100px">
+							<h:outputText value="#{p.nombre}" />
+						</p:column>
 
-                        <p:commandButton icon="pi pi-trash" title="Eliminar"
-                                         actionListener="#{platoBean.eliminarPlato(p.platoId)}"
-                                         process="@this"
-                                         update="@form"
-                                         styleClass="ui-button-danger" ajax="true" />
-                    </p:column>
+						<p:column headerText="Costo"
+							style="width:140px; text-align:right;">
+							<h:outputText value="#{p.costo != null ? p.costo : 0}" />
+						</p:column>
 
-                </p:dataTable>
-            </div>
-        </div>
+						<p:column headerText="Precio venta"
+							style="width:160px; text-align:right;">
+							<h:outputText
+								value="#{p.precioVenta != null ? p.precioVenta : 0}" />
+						</p:column>
 
-        <!-- DIALOG CREAR: crear siempre desde receta (no se pide costo manual) -->
-        <p:dialog header="Crear Plato desde Receta"
-                  widgetVar="dlgNuevoPlato"
-                  modal="true"
-                  closable="true"
-                  width="720"
-                  appendTo="@form">
+						<p:column headerText="Acciones"
+							style="width:260px; text-align:center;">
+							<p:commandButton icon="pi pi-search" title="Ver detalle"
+								actionListener="#{platoBean.verDetalles(p)}" process="@this"
+								update="@form" oncomplete="PF('dlgDetalle').show()"
+								styleClass="ui-button-info" ajax="true" />
 
-            <h:panelGrid id="dlgNuevoGrid" columns="2" cellpadding="6">
-                <h:outputLabel for="receta" value="Receta:" />
-                <p:selectOneMenu id="receta" value="#{platoBean.selectedRecetaId}">
-                    <f:selectItem itemLabel="-- Selecciona una receta --" itemValue="#{null}" />
-                    <f:selectItems value="#{platoBean.recetasDisponibles}" var="r"
-                                   itemValue="#{r.recetaId}"
-                                   itemLabel="#{r.nombre} (id: #{r.recetaId})" />
-                    <p:ajax event="change" listener="#{platoBean.onRecetaChange}" process="@this" update="@form" />
-                </p:selectOneMenu>
+							<p:commandButton icon="pi pi-trash" title="Eliminar"
+								actionListener="#{platoBean.eliminarPlato(p.platoId)}"
+								process="@this" update="@form" styleClass="ui-button-danger"
+								ajax="true" />
+						</p:column>
 
-                <h:outputLabel for="previewNombre" value="Nombre propuesto:" />
-                <p:inputText id="previewNombre" value="#{platoBean.nuevoPlato.nombre}" />
+					</p:dataTable>
+				</div>
+			</div>
+		</div>
 
-                <h:outputLabel for="costo" value="Costo (calculado):" />
-                <p:inputText id="costo" value="#{platoBean.nuevoPlato.costo}" readonly="true" />
+		<p:dialog header="Crear Plato desde Receta" widgetVar="dlgNuevoPlato"
+			modal="true" closable="true" width="720" appendTo="@form">
 
-                <h:outputLabel for="precio" value="Precio venta (calculado):" />
-                <p:inputText id="precio" value="#{platoBean.nuevoPlato.precioVenta}" readonly="true" />
+			<h:panelGrid id="dlgNuevoGrid" columns="2" cellpadding="6">
+				<h:outputLabel for="receta" value="Receta:" />
+				<p:selectOneMenu id="receta" value="#{platoBean.selectedRecetaId}">
+					<f:selectItem itemLabel="-- Selecciona una receta --"
+						itemValue="#{null}" />
+					<f:selectItems value="#{platoBean.recetasDisponibles}" var="r"
+						itemValue="#{r.recetaId}"
+						itemLabel="#{r.nombre} (id: #{r.recetaId})" />
+					<p:ajax event="change" listener="#{platoBean.onRecetaChange}"
+						process="@this" update="@form" />
+				</p:selectOneMenu>
 
-                <h:outputLabel for="imagen" value="Imagen (opcional):" />
-                <p:inputText id="imagen" value="#{platoBean.nuevoPlato.imagen}" />
-            </h:panelGrid>
+				<h:outputLabel for="previewNombre" value="Nombre propuesto:" />
+				<p:inputText id="previewNombre"
+					value="#{platoBean.nuevoPlato.nombre}" />
 
-            <p:separator />
-            <div style="text-align:right;">
-                <p:commandButton value="Crear desde receta" icon="pi pi-save"
-                                 actionListener="#{platoBean.crearPlatoDesdeReceta}"
-                                 process="@form"
-                                 update="@form"
-                                 oncomplete="PF('dlgNuevoPlato').hide()" styleClass="ui-button-success" ajax="true" />
-            </div>
-        </p:dialog>
+				<h:outputLabel for="costo" value="Costo (calculado):" />
+				<p:inputText id="costo" value="#{platoBean.nuevoPlato.costo}"
+					readonly="true" />
 
-        <!-- DIALOG DETALLE -->
-        <p:dialog header="Detalle del Plato" widgetVar="dlgDetalle" modal="true" id="dlgDetalle" closable="true" appendTo="@form">
-            <h:panelGrid id="dlgDetalleGrid" columns="2" cellpadding="6">
-                <h:outputText value="ID:" />
-                <h:outputText value="#{platoBean.platoSeleccionado.platoId}" />
+				<h:outputLabel for="precio" value="Precio venta (calculado):" />
+				<p:inputText id="precio" value="#{platoBean.nuevoPlato.precioVenta}"
+					readonly="true" />
 
-                <h:outputText value="Nombre:" />
-                <h:outputText value="#{platoBean.platoSeleccionado.nombre}" />
+				<h:outputLabel for="imagen" value="Imagen (opcional):" />
+				<p:inputText id="imagen" value="#{platoBean.nuevoPlato.imagen}" />
+			</h:panelGrid>
 
-                <h:outputText value="Costo:" />
-                <h:outputText value="#{platoBean.platoSeleccionado.costo}" />
+			<p:separator />
+			<div style="text-align: right;">
+				<p:commandButton value="Crear desde receta" icon="pi pi-save"
+					actionListener="#{platoBean.crearPlatoDesdeReceta}" process="@form"
+					update="@form" oncomplete="PF('dlgNuevoPlato').hide()"
+					styleClass="ui-button-success" ajax="true" />
+			</div>
+		</p:dialog>
 
-                <h:outputText value="Precio venta:" />
-                <h:outputText value="#{platoBean.platoSeleccionado.precioVenta}" />
+		<p:dialog header="Detalle del Plato" widgetVar="dlgDetalle"
+			modal="true" id="dlgDetalle" closable="true" appendTo="@form">
+			<h:panelGrid id="dlgDetalleGrid" columns="2" cellpadding="6">
+				<h:outputText value="ID:" />
+				<h:outputText value="#{platoBean.platoSeleccionado.platoId}" />
 
-                <h:outputText value="Imagen:" />
-                <h:panelGroup>
-                    <h:graphicImage value="#{platoBean.platoSeleccionado.imagen}" styleClass="thumb" rendered="#{not empty platoBean.platoSeleccionado.imagen}" />
-                    <h:outputText value="(sin imagen)" rendered="#{empty platoBean.platoSeleccionado.imagen}" />
-                </h:panelGroup>
+				<h:outputText value="Nombre:" />
+				<h:outputText value="#{platoBean.platoSeleccionado.nombre}" />
 
-                <h:outputText value="Receta asociada (id):" />
-                <h:outputText value="#{platoBean.platoSeleccionado.recetaId}" />
-            </h:panelGrid>
-        </p:dialog>
+				<h:outputText value="Costo:" />
+				<h:outputText value="#{platoBean.platoSeleccionado.costo}" />
 
-    </h:form>
+				<h:outputText value="Precio venta:" />
+				<h:outputText value="#{platoBean.platoSeleccionado.precioVenta}" />
+
+				<h:outputText value="Imagen:" />
+				<h:panelGroup>
+					<h:graphicImage value="#{platoBean.platoSeleccionado.imagen}"
+						styleClass="thumb"
+						rendered="#{not empty platoBean.platoSeleccionado.imagen}" />
+					<h:outputText value="(sin imagen)"
+						rendered="#{empty platoBean.platoSeleccionado.imagen}" />
+				</h:panelGroup>
+
+				<h:outputText value="Receta asociada (id):" />
+				<h:outputText value="#{platoBean.platoSeleccionado.recetaId}" />
+			</h:panelGrid>
+		</p:dialog>
+
+	</h:form>
 </h:body>
 </html>

@@ -3,110 +3,252 @@
       xmlns:h="http://xmlns.jcp.org/jsf/html"
       xmlns:p="http://primefaces.org/ui"
       xmlns:f="http://xmlns.jcp.org/jsf/core">
-<h:head>
-    <title>Lotes - Cafetería NamNam</title>
 
+<h:head>
+    <title>Lotes - Cafetería Ñam Ñam</title>
     <style>
-        :root{
-            --bg: #f5f7fb;
-            --card: #ffffff;
-            --accent: #6c5ce7;
-            --muted: #7f8c8d;
-            --success: #27ae60;
-            --danger: #e74c3c;
-            --small: 13px;
-            --tiny: 12px;
+    @charset "UTF-8";
+
+    :root {
+        --floral-white: #fff9f0;
+        --soft-apricot: #ffe1c6;
+        --vanilla-custard: #fff7ae;
+        --pastel-petal: #ffc6d9;
+        --light-bronze: #d3a288;
+        --font-primary: "Poppins", sans-serif;
+        --font-secondary: "Nunito", sans-serif;
+        --soft-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--floral-white);
+        font-family: var(--font-primary);
+        color: var(--light-bronze);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .layout {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        min-height: 100vh;
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .sidebar {
+        background-color: var(--soft-apricot);
+        border: 1px solid var(--light-bronze);
+        border-radius: 16px;
+        padding: 2rem 1rem;
+        box-shadow: var(--soft-shadow);
+        color: var(--light-bronze);
+    }
+
+    .sidebar h2 {
+        font-family: var(--font-primary);
+        font-weight: 700;
+        margin-top: 0;
+    }
+
+    .sidebar p {
+        font-family: var(--font-secondary);
+        margin-bottom: 1rem;
+    }
+
+    .header-card, .table-card {
+        background: var(--soft-apricot);
+        border: 1px solid var(--light-bronze);
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: var(--soft-shadow);
+    }
+
+    .header-card {
+        margin-bottom: 1rem;
+    }
+
+    .page-title {
+        margin: 0;
+        color: var(--light-bronze);
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .section-title {
+        margin-top: .25rem;
+        font-size: 14px;
+        color: var(--light-bronze);
+    }
+
+    .btn, .ui-button, .ui-button-success, .ui-button-danger {
+        background-color: var(--pastel-petal) !important;
+        border: 1px solid var(--light-bronze) !important;
+        border-radius: 10px !important;
+        color: var(--light-bronze) !important;
+        font-weight: 600 !important;
+        transition: 0.25s ease !important;
+    }
+
+    .ui-button:hover, .btn:hover {
+        background-color: var(--vanilla-custard) !important;
+    }
+
+    .compact-table .ui-datatable-tablewrapper {
+        overflow-x: auto;
+    }
+
+    .compact-table .ui-datatable-thead>tr>th, .compact-table .ui-datatable-tbody>tr>td {
+        background: var(--floral-white) !important;
+        border: 1px solid var(--soft-apricot) !important;
+        padding: 0.6rem;
+        font-family: var(--font-secondary);
+        font-size: 14px;
+        color: var(--light-bronze);
+    }
+
+    .compact-table .small-muted {
+        font-size: 12px;
+        opacity: 0.7;
+    }
+
+    @media ( max-width : 900px) {
+        .layout {
+            grid-template-columns: 1fr;
         }
-        body{ margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); }
-        .layout{ display:grid; grid-template-columns: 250px 1fr; min-height:100vh; gap:1rem; padding:1rem; }
-        .sidebar{ background: #2d3436; color: #fff; padding: 2rem 1rem; border-radius:8px; }
-        .main{ padding: 0; }
-        .header-card{ background: var(--card); padding:1.25rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); margin-bottom:1rem; }
-        .table-card{ background: var(--card); padding:1rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-        .page-title{ color: #2c3e50; margin:0; font-size:28px; }
-        .section-title{ color:var(--muted); margin-top:.25rem; font-size:14px; }
-        .actions-row{ display:flex; gap:.5rem; align-items:center }
-        /* Tabla compacta */
-        .compact-table .ui-datatable-tablewrapper { overflow-x:auto; }
-        .compact-table .ui-datatable-thead > tr > th,
-        .compact-table .ui-datatable-tbody > tr > td {
-            padding: 0.6rem 0.75rem;
-            font-size: var(--small);
-            vertical-align: middle;
+        .sidebar {
+            display: none;
         }
-        .compact-table .small-muted { font-size: var(--tiny); color: var(--muted); display:block; }
-        .col-centered { text-align:center; }
-        .col-truncate { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
-        .btn-eye { padding:0.35rem; border-radius:6px; }
-        @media (max-width: 900px) {
-            .layout{ grid-template-columns: 1fr; }
-            .sidebar{ display:none; }
-            /* esconder columna Orden en pantallas pequeñas */
-            .hide-on-mobile { display:none !important; }
+        .hide-on-mobile {
+            display: none !important;
         }
+    }
+
+    .ui-messages {
+        position: relative;
+    }
+
+    .ui-messages .ui-messages-close {
+        position: absolute !important;
+        top: 1px !important;
+        right: auto !important;
+        left: 1px !important;
+        margin: 0 !important;
+    }
+
+    .ui-messages, .ui-message {
+        width: 100%;
+        margin: 12px 0 !important;
+    }
+
+    .ui-messages>div, .ui-message>div {
+        padding: 16px 20px !important;
+        border-radius: 12px !important;
+        box-shadow: var(--soft-shadow) !important;
+        margin-bottom: 12px !important;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        line-height: 1.4;
+    }
+
+    .titulo-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .logo-img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+    }
     </style>
 </h:head>
 
 <h:body>
     <h:form id="lotesForm">
-        <f:event type="preRenderView" listener="#{loteBean.cargarLotes}" />
+        <!-- cargar todos los recursos en el preRenderView para que órdenes, ingredientes y proveedores
+             estén siempre sincronizados cuando se renderice la página -->
+        <f:event type="preRenderView" listener="#{loteBean.cargarRecursos}" />
 
         <div class="layout">
             <div class="sidebar">
-                <!-- tu sidebar intacto -->
-                <h2>☕ NamNam</h2>
+                <h2 class="titulo-logo">
+                    <img src="resources/img/logo.png" alt="Logo" class="logo-img" />
+                    Ñam Ñam
+                </h2>
                 <p>Panel de Administración</p>
-                <p:menu styleClass="menu-vertical" >
-                    <p:menuitem value="Dashboard" url="admin.xhtml" icon="pi pi-home" />
-                    <p:menuitem value="Productos" url="producto.xhtml" icon="pi pi-box" />
-                    <p:menuitem value="Ingredientes" url="ingrediente.xhtml" icon="pi pi-leaf" />
-                    <p:menuitem value="Órdenes Compra" url="ordenes-compra.xhtml" icon="pi pi-shopping-cart" />
-                    <p:menuitem value="Proveedores" url="proveedor.xhtml" icon="pi pi-truck" />
-                    <p:menuitem value="Lotes" url="lote.xhtml" icon="pi pi-archive" />
+                <p:menu styleClass="menu-vertical">
+                    <p:menuitem value="Órdenes de Compra" url="principal.xhtml" icon="pi pi-shopping-cart" />
+                    <p:menuitem value="Lote" url="lote.xhtml" icon="pi pi-box" />
+                    <p:menuitem value="Ingredientes" url="ingrediente.xhtml" icon="pi pi-apple" />
+                    <p:menuitem value="Inventario" url="inventario.xhtml" icon="pi pi-tags" />
+                    <p:menuitem value="Recetas" url="receta.xhtml" icon="pi pi-book" />
+                    <p:menuitem value="Platos" url="plato.xhtml" icon="pi pi-th-large" />
+                    <p:menuitem value="Empresas Proveedoras" url="empresa.xhtml" icon="pi pi-building" />
+                    <p:menuitem value="Proveedores Asociados" url="proveedor.xhtml" icon="pi pi-truck" />
                 </p:menu>
             </div>
 
             <div class="main">
                 <div class="header-card">
-                    <h1 class="page-title">Lotes</h1>
-                    <p class="section-title">Recepción y gestión de lotes</p>
+                    <div class="header-left">
+                        <h1 class="page-title">Lotes</h1>
+                        <p class="section-title">Gestión de lotes</p>
+                    </div>
+
+                    <div class="header-right">
+                        <p:commandButton value="Cerrar Sesión" icon="pi pi-sign-out"
+                                         action="#{validarIngreso.logout}" styleClass="logout-btn"
+                                         process="@this" />
+                    </div>
                 </div>
 
                 <div class="table-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <div id="headerStats">
-                            <h3 style="margin:0">Listado de lotes</h3>
+                            <h3 style="margin: 0">Listado de lotes</h3>
                             <small class="section-title">Total: <strong>#{loteBean.lotes.size()}</strong></small>
                         </div>
-
                         <div class="actions-row">
                             <p:messages id="msgs" autoUpdate="true" closable="true" showDetail="true" showSummary="false" />
+
+                            <!-- refrescar ahora recarga ordenes, ingredientes y proveedores también -->
                             <p:commandButton icon="pi pi-refresh" title="Refrescar"
-                                             update=":lotesForm:dtLotes"
-                                             actionListener="#{loteBean.cargarLotes}"
-                                             process="@this"/>
-                            <p:commandButton value="➕ Nuevo Lote" icon="pi pi-plus"
-                                             actionListener="#{loteBean.prepararNuevoLote}"
+                                             actionListener="#{loteBean.cargarRecursos}"
+                                             update=":lotesForm:dtLotes :lotesForm:msgs"
+                                             process="@this" />
+
+                            <!-- al abrir el diálogo de creación: recargar todos los recursos y preparar nuevo lote -->
+                            <p:commandButton value="Nuevo Lote" icon="pi pi-plus"
+                                             actionListener="#{loteBean.cargarRecursos}"
+                                             action="#{loteBean.prepararNuevoLote}"
                                              oncomplete="PF('dlgNuevoLote').show()"
-                                             process="@this"/>
+                                             process="@this"
+                                             update=":formCrear:dlgNuevoLoteGrid :formCrear:selProv :formCrear:selIngred :formCrear:selOrden :lotesForm:msgs" />
                         </div>
                     </div>
 
                     <p:dataTable id="dtLotes" value="#{loteBean.lotes}" var="lote"
-                                 rowIndexVar="rowIndex"
-                                 paginator="true" rows="10"
+                                 rowIndexVar="rowIndex" paginator="true" rows="10"
                                  responsiveLayout="scroll" style="width:100%"
-                                 styleClass="compact-table"
-                                 emptyMessage="No se encontraron lotes">
+                                 styleClass="compact-table" emptyMessage="No se encontraron lotes">
 
-                        <p:column headerText="ID" style="width:70px; text-align:center;" >
+                        <p:column headerText="ID" style="width:70px; text-align:center;">
                             <h:outputText value="#{lote.loteId != null ? lote.loteId : (rowIndex + 1)}" />
                         </p:column>
 
-                        <!-- Fechas combinadas (mejora visual) -->
                         <p:column headerText="Fechas" style="width:160px;">
                             <h:outputText value="Recep: " styleClass="small-muted" />
-                            <h:outputText value="#{lote.fechaRecepcion}" /><br/>
+                            <h:outputText value="#{lote.fechaRecepcion}" />
+                            <br />
                             <h:outputText value="Caducidad: " styleClass="small-muted" />
                             <h:outputText value="#{lote.fechaCaducidad != null ? lote.fechaCaducidad : '—'}" />
                         </p:column>
@@ -117,21 +259,23 @@
                         </p:column>
 
                         <p:column headerText="Orden" style="width:90px;" styleClass="col-centered hide-on-mobile">
+                            <!-- mostrar nombre/ID de orden si está disponible -->
                             <h:outputText value="#{lote.ordenId != null ? lote.ordenId : '—'}" />
                         </p:column>
 
-                        <!-- Ingrediente: ahora muestra solo el nombre (sin tags en el atributo value) -->
                         <p:column headerText="Ingrediente" style="text-align:left; width:260px;">
                             <h:outputText value="#{loteBean.getIngredienteNombre(lote.codigoIngrediente)}" styleClass="col-truncate" />
                         </p:column>
 
-                        <!-- Proveedor: mostrar id + botón para ver detalle -->
                         <p:column headerText="Proveedor" style="text-align:center; width:140px;">
                             <h:outputText value="#{lote.proveedorId != null ? lote.proveedorId : '—'}" />
+                            <!-- antes de mostrar detalle, recargar recursos para asegurar lista actualizada -->
                             <p:commandButton style="margin-left:6px" icon="pi pi-eye" title="Ver proveedor" styleClass="btn-eye"
-                                             actionListener="#{loteBean.prepararMostrarProveedor(lote.proveedorId)}"
+                                             actionListener="#{loteBean.cargarRecursos}"
+                                             action="#{loteBean.prepararMostrarProveedor(lote.proveedorId)}"
                                              update=":formProveedor:dlgProveedorGrid :lotesForm:msgs"
-                                             oncomplete="PF('dlgProveedor').show()" process="@this" />
+                                             oncomplete="PF('dlgProveedor').show()"
+                                             process="@this" />
                         </p:column>
 
                         <p:column headerText="Acciones" style="width:120px; text-align:center;">
@@ -149,7 +293,6 @@
         </div>
     </h:form>
 
-    <!-- DIALOG: Mostrar proveedor (form separado; actualizamos con :formProveedor:dlgProveedorGrid) -->
     <h:form id="formProveedor">
         <p:dialog header="Detalle del Proveedor" widgetVar="dlgProveedor" modal="true" id="dlgProveedor" closable="true" responsive="true">
             <h:panelGrid id="dlgProveedorGrid" columns="2" cellpadding="6">
@@ -158,12 +301,11 @@
                 <h:outputText value="NIT:" /><h:outputText value="#{loteBean.proveedorView.nit}" />
                 <h:outputText value="Teléfono:" /><h:outputText value="#{loteBean.proveedorView.telefono}" />
                 <h:outputText value="Email:" /><h:outputText value="#{loteBean.proveedorView.email}" />
-                <h:outputText value="Dirección:" /><h:outputText value="#{loteBean.proveedorView.direccion}" />
+              
             </h:panelGrid>
         </p:dialog>
     </h:form>
 
-    <!-- DIALOG: Crear nuevo lote -->
     <h:form id="formCrear">
         <p:dialog header="Crear Lote" widgetVar="dlgNuevoLote" modal="true" id="dlgNuevoLote" closable="true" width="720">
             <h:panelGrid id="dlgNuevoLoteGrid" columns="2" cellpadding="6">
@@ -174,39 +316,36 @@
                 <p:calendar id="newFechaCad" value="#{loteBean.nuevoLote.fechaCaducidad}" pattern="yyyy-MM-dd" />
 
                 <h:outputLabel for="newCantidad" value="Cantidad:" />
-                <p:inputText id="newCantidad" value="#{loteBean.nuevoLote.cantidad}">
+                <p:inputText id="newCantidad" value="#{loteBean.nuevoLote.cantidad}" required="true">
                     <f:convertNumber integerOnly="true" />
                 </p:inputText>
 
                 <h:outputLabel for="newPrecio" value="Precio (total):" />
-                <p:inputText id="newPrecio" value="#{loteBean.nuevoLote.precio}">
+                <p:inputText id="newPrecio" value="#{loteBean.nuevoLote.precio}" required="true">
                     <f:convertNumber integerOnly="true" />
                 </p:inputText>
 
-                <h:outputLabel for="selOrden" value="Orden (opcional):" />
+                <h:outputLabel for="selOrden" value="Orden:" />
                 <p:selectOneMenu id="selOrden" value="#{loteBean.nuevoLote.ordenId}">
                     <f:selectItem itemLabel="-- Ninguna --" itemValue="#{null}" />
-                    <f:selectItems value="#{loteBean.ordenes}" var="o"
-                                   itemValue="#{o.ordenId}"
-                                   itemLabel="#{o.ordenId}" />
+                    <f:selectItems value="#{loteBean.ordenes}" var="o" itemValue="#{o.ordenId}" itemLabel="#{o.ordenId}" />
                 </p:selectOneMenu>
 
                 <h:outputLabel for="selIngred" value="Ingrediente:" />
-                <p:selectOneMenu id="selIngred" value="#{loteBean.nuevoLote.codigoIngrediente}" required="true">
+                <p:selectOneMenu id="selIngred" value="#{loteBean.nuevoLote.codigoIngrediente}">
                     <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
                     <f:selectItems value="#{loteBean.ingredientes}" var="ing"
                                    itemValue="#{ing.codigo}"
                                    itemLabel="#{ing.nombre} (cod: #{ing.codigo})" />
                 </p:selectOneMenu>
 
-                <h:outputLabel for="selProv" value="Proveedor (opcional):" />
+                <h:outputLabel for="selProv" value="Proveedor:" />
                 <p:selectOneMenu id="selProv" value="#{loteBean.nuevoLote.proveedorId}">
                     <f:selectItem itemLabel="-- Ninguno --" itemValue="#{null}" />
                     <f:selectItems value="#{loteBean.proveedores}" var="p"
                                    itemValue="#{p.proveedorId}"
                                    itemLabel="#{p.primerNombre} #{p.primerApellido} (id: #{p.proveedorId})" />
                 </p:selectOneMenu>
-
             </h:panelGrid>
 
             <p:separator />
@@ -214,9 +353,9 @@
                              actionListener="#{loteBean.crearLote}"
                              process="@form"
                              update=":lotesForm:dtLotes :lotesForm:msgs"
-                             oncomplete="PF('dlgNuevoLote').hide()" styleClass="ui-button-success" />
+                             oncomplete="PF('dlgNuevoLote').hide()"
+                             styleClass="ui-button-success" />
         </p:dialog>
     </h:form>
-
 </h:body>
 </html>

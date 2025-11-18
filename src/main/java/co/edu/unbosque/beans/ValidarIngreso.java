@@ -4,15 +4,12 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-
 import co.edu.unbosque.model.AdministradorDTO;
 import co.edu.unbosque.model.persistence.ExternalHTTPRequestHandler;
 import co.edu.unbosque.util.LocalDateAdapter;
-
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -21,97 +18,105 @@ import jakarta.inject.Named;
 @Named("validarIngreso")
 @SessionScoped
 public class ValidarIngreso implements Serializable {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
+	private String username;
+	private String password;
+	private AdministradorDTO administradorLogeado;
+	private final String BASE_URL = "http://localhost:8083/api/administradores";
+	private final Gson gson = new GsonBuilder().registerTypeAdapter(java.time.LocalDate.class, new LocalDateAdapter())
+			.create();
 
-    private String username;
-    private String password;
+	public String login() {
+		try {
+			String body = ExternalHTTPRequestHandler.doGet(BASE_URL);
 
-    private AdministradorDTO administradorLogeado;
+			if (body == null)
+				body = "";
 
-    // Observa: el endpoint correcto (según tu controlador) es GET /api/administradores
-    private final String BASE_URL = "http://localhost:8083/api/administradores";
+			List<AdministradorDTO> admins = new ArrayList<>();
 
-    private final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(java.time.LocalDate.class, new LocalDateAdapter())
-            .create();
+			try {
+				Type t = new TypeToken<List<AdministradorDTO>>() {
+				}.getType();
+				admins = gson.fromJson(body, t);
+			} catch (Exception ex) {
+				try {
+					AdministradorDTO single = gson.fromJson(body, AdministradorDTO.class);
+					if (single != null) {
+						admins = new ArrayList<>();
+						admins.add(single);
+					}
+				} catch (Exception ex2) {
+				}
+			}
 
-    public String login() {
-        try {
-            String body = ExternalHTTPRequestHandler.doGet(BASE_URL); // <- sin "/all"
+			if (admins == null)
+				admins = new ArrayList<>();
 
-            if (body == null) body = "";
+			String userTrim = username == null ? "" : username.trim();
+			String pass = password == null ? "" : password;
 
-            List<AdministradorDTO> admins = new ArrayList<>();
+			for (AdministradorDTO a : admins) {
+				if (a == null)
+					continue;
+				String nombre = a.getNombreAdministrador() == null ? "" : a.getNombreAdministrador().trim();
+				String clave = a.getClave() == null ? "" : a.getClave();
 
-            // Intentar parsear como lista
-            try {
-                Type t = new TypeToken<List<AdministradorDTO>>() {}.getType();
-                admins = gson.fromJson(body, t);
-            } catch (Exception ex) {
-                // si no es lista, intentar parseo como un solo objeto
-                try {
-                    AdministradorDTO single = gson.fromJson(body, AdministradorDTO.class);
-                    if (single != null) {
-                        admins = new ArrayList<>();
-                        admins.add(single);
-                    }
-                } catch (Exception ex2) {
-                    // dejar lista vacía
-                }
-            }
+				if (nombre.equals(userTrim) && clave.equals(pass)) {
+					this.administradorLogeado = a;
+					FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("admin", a);
+					FacesContext.getCurrentInstance().addMessage(null,
+							new FacesMessage(FacesMessage.SEVERITY_INFO, "Bienvenido " + nombre, null));
+					return "/principal.xhtml?faces-redirect=true";
+				}
+			}
 
-            if (admins == null) admins = new ArrayList<>();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Usuario o contraseña incorrectos", null));
+			return null;
 
-            String userTrim = username == null ? "" : username.trim();
-            String pass = password == null ? "" : password;
+		} catch (Exception e) {
+			e.printStackTrace();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error al autenticarse: " + e.getMessage(), null));
+			return null;
+		}
+	}
 
-            for (AdministradorDTO a : admins) {
-                if (a == null) continue;
-                String nombre = a.getNombreAdministrador() == null ? "" : a.getNombreAdministrador().trim();
-                String clave = a.getClave() == null ? "" : a.getClave();
+	public String logout() {
+		FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
+		this.administradorLogeado = null;
+		return "/login.xhtml?faces-redirect=true";
+	}
 
-                if (nombre.equals(userTrim) && clave.equals(pass)) {
-                    this.administradorLogeado = a;
-                    FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("admin", a);
-                    FacesContext.getCurrentInstance().addMessage(null,
-                            new FacesMessage(FacesMessage.SEVERITY_INFO, "Bienvenido " + nombre, null));
-                    // Ajusta la ruta si tu dashboard tiene otra ubicación
-                    return "/lote.xhtml?faces-redirect=true";
-                }
-            }
+	public boolean isLoggedIn() {
+		if (administradorLogeado != null)
+			return true;
+		Object s = FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("admin");
+		return s != null;
+	}
 
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Usuario o contraseña incorrectos", null));
-            return null;
+	public String getUsername() {
+		return username;
+	}
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error al autenticarse: " + e.getMessage(), null));
-            return null;
-        }
-    }
+	public void setUsername(String username) {
+		this.username = username;
+	}
 
-    public String logout() {
-        FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
-        this.administradorLogeado = null;
-        return "/principal.xhtml?faces-redirect=true";
-    }
+	public String getPassword() {
+		return password;
+	}
 
-    public boolean isLoggedIn() {
-        if (administradorLogeado != null) return true;
-        Object s = FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("admin");
-        return s != null;
-    }
+	public void setPassword(String password) {
+		this.password = password;
+	}
 
-    // Getters / setters
+	public AdministradorDTO getAdministradorLogeado() {
+		return administradorLogeado;
+	}
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public AdministradorDTO getAdministradorLogeado() { return administradorLogeado; }
-    public void setAdministradorLogeado(AdministradorDTO administradorLogeado) { this.administradorLogeado = administradorLogeado; }
+	public void setAdministradorLogeado(AdministradorDTO administradorLogeado) {
+		this.administradorLogeado = administradorLogeado;
+	}
 }

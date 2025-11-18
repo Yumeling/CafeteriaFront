@@ -1,269 +1,532 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://xmlns.jcp.org/jsf/core">
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://xmlns.jcp.org/jsf/core">
 
 <h:head>
-    <title>Órdenes de Compra - Cafetería NamNam</title>
-    <style>
-        :root{ --bg: #f5f7fb; --card: #ffffff; --accent: #6c5ce7; --muted: #7f8c8d; --success: #27ae60; --danger: #e74c3c; }
-        body{ margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); }
-        .layout{ display:grid; grid-template-columns: 250px 1fr; min-height:100vh; }
-        .sidebar{ background: #2d3436; color: #fff; padding: 2rem 1rem; }
-        .main{ padding: 2rem; }
-        .header-card{ background: var(--card); padding:1.25rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); margin-bottom:1.5rem; }
-        .table-card{ background: var(--card); padding:1.25rem; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-        .actions-row{ display:flex; gap:.5rem; align-items:center }
-        @media (max-width:900px){ .layout{ grid-template-columns: 1fr; } .sidebar{ display:none; } }
-    </style>
+	<title>Órdenes de Compra - Cafetería Ñam Ñam</title>
+	<style>
+@charset "UTF-8";
+
+:root {
+	--floral-white: #fff9f0;
+	--soft-apricot: #ffe1c6;
+	--vanilla-custard: #fff7ae;
+	--pastel-petal: #ffc6d9;
+	--light-bronze: #d3a288;
+	--font-primary: "Poppins", sans-serif;
+	--font-secondary: "Nunito", sans-serif;
+	--soft-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	background-color: var(--floral-white);
+	font-family: var(--font-primary);
+	color: var(--light-bronze);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: 260px 1fr;
+	min-height: 100vh;
+	padding: 1rem;
+	gap: 1rem;
+}
+
+.sidebar {
+	background-color: var(--soft-apricot);
+	border: 1px solid var(--light-bronze);
+	border-radius: 16px;
+	padding: 2rem 1rem;
+	box-shadow: var(--soft-shadow);
+	color: var(--light-bronze);
+}
+
+.sidebar h2 {
+	font-family: var(--font-primary);
+	font-weight: 700;
+	margin-top: 0;
+}
+
+.sidebar p {
+	font-family: var(--font-secondary);
+	margin-bottom: 1rem;
+}
+
+.ui-menu .ui-menuitem-link {
+	background: var(--floral-white) !important;
+	border-radius: 10px !important;
+	margin: 4px 0 !important;
+	padding: 10px 12px !important;
+	color: var(--light-bronze) !important;
+	font-weight: 600;
+	transition: 0.25s ease;
+}
+
+.ui-menu .ui-menuitem-link:hover {
+	background: var(--pastel-petal) !important;
+}
+
+.header-card, .table-card {
+	background: var(--soft-apricot);
+	border: 1px solid var(--light-bronze);
+	border-radius: 16px;
+	padding: 1.25rem;
+	box-shadow: var(--soft-shadow);
+}
+
+.header-card {
+	margin-bottom: 1rem;
+}
+
+.page-title {
+	margin: 0;
+	color: var(--light-bronze);
+	font-size: 26px;
+	font-weight: 700;
+}
+
+.section-title {
+	margin-top: .25rem;
+	font-size: 14px;
+	color: var(--light-bronze);
+}
+
+.btn, .ui-button, .ui-button-success, .ui-button-danger {
+	background-color: var(--pastel-petal) !important;
+	border: 1px solid var(--light-bronze) !important;
+	border-radius: 10px !important;
+	color: var(--light-bronze) !important;
+	font-weight: 600 !important;
+	transition: 0.25s ease !important;
+}
+
+.ui-button:hover, .btn:hover {
+	background-color: var(--vanilla-custard) !important;
+}
+
+.compact-table .ui-datatable-tablewrapper {
+	overflow-x: auto;
+}
+
+.compact-table .ui-datatable-thead>tr>th, .compact-table .ui-datatable-tbody>tr>td
+	{
+	background: var(--floral-white) !important;
+	border: 1px solid var(--soft-apricot) !important;
+	padding: 0.6rem;
+	font-family: var(--font-secondary);
+	font-size: 14px;
+	color: var(--light-bronze);
+}
+
+.compact-table .small-muted {
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+@media ( max-width : 900px) {
+	.layout {
+		grid-template-columns: 1fr;
+	}
+	.sidebar {
+		display: none;
+	}
+	.hide-on-mobile {
+		display: none !important;
+	}
+}
+
+.ui-messages {
+	position: relative;
+}
+
+.ui-messages .ui-messages-close {
+	position: absolute !important;
+	top: 1px !important;
+	right: auto !important;
+	left: 1px !important;
+	margin: 0 !important;
+}
+
+.ui-messages, .ui-message {
+	width: 100%;
+	margin: 12px 0 !important;
+}
+
+.ui-messages>div, .ui-message>div {
+	padding: 16px 20px !important;
+	border-radius: 12px !important;
+	box-shadow: var(--soft-shadow) !important;
+	margin-bottom: 12px !important;
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	line-height: 1.4;
+}
+
+.ui-messages>div .ui-messages-icon, .ui-message>div .ui-message-icon {
+	margin-right: 10px !important;
+	font-size: 1.3rem !important;
+}
+
+.ui-messages>div .ui-messages-info-summary, .ui-messages>div .ui-messages-warn-summary,
+	.ui-messages>div .ui-messages-error-summary, .ui-messages>div .ui-messages-fatal-summary,
+	.ui-message .ui-message-info-summary, .ui-message .ui-message-error-summary
+	{
+	font-weight: bold !important;
+	margin-bottom: 4px !important;
+	display: block;
+}
+
+.ui-messages-info, .ui-message-info {
+	background-color: #e8f4ff !important;
+	border-left: 6px solid #74b9ff !important;
+	color: #2d6aaa !important;
+}
+
+.ui-messages-warn, .ui-message-warn {
+	background-color: #fff8d8 !important;
+	border-left: 6px solid #f4c542 !important;
+	color: #8a6d1f !important;
+}
+
+.ui-messages-error, .ui-message-error {
+	background-color: #ffe5e5 !important;
+	border-left: 6px solid #ff6b6b !important;
+	color: #c0392b !important;
+}
+
+.ui-messages-success, .ui-message-success {
+	background-color: #eaffea !important;
+	border-left: 6px solid #7bd67b !important;
+	color: #2e7d32 !important;
+}
+
+.ui-messages ul {
+	margin: 0 !important;
+	padding-left: 0 !important;
+}
+
+.ui-messages li {
+	list-style: none !important;
+	margin-bottom: 6px !important;
+}
+
+.titulo-logo {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 24px;
+	font-weight: bold;
+}
+
+.logo-img {
+	width: 70px;
+	height: 70px;
+	object-fit: contain;
+}
+</style>
 </h:head>
 
 <h:body>
-    <h:form id="ordenesForm">
-        <f:event type="preRenderView" listener="#{ordenCompraBean.cargarOrdenes}" />
+	<h:form id="ordenesForm">
+		<f:event type="preRenderView" listener="#{ordenCompraBean.cargarOrdenes}" />
+		<f:event type="preRenderView" listener="#{ordenCompraBean.cargarIngredientesDisponibles}" />
 
-        <div class="layout">
-            <div class="sidebar">
-                <h2>☕ NamNam</h2>
-                <p>Panel de Administración</p>
-                <p:menu styleClass="menu-vertical" >
-                    <p:menuitem value="Dashboard" url="admin.xhtml" icon="pi pi-home" />
-                    <p:menuitem value="Productos" url="producto.xhtml" icon="pi pi-box" />
-                    <p:menuitem value="Ingredientes" url="ingrediente.xhtml" icon="pi pi-leaf" />
-                    <p:menuitem value="Órdenes Compra" url="ordenes-compra.xhtml" icon="pi pi-shopping-cart" />
-                    <p:menuitem value="Proveedores" url="proveedor.xhtml" icon="pi pi-truck" />
-                </p:menu>
-            </div>
+		<div class="layout">
+			<div class="sidebar">
+				<h2 class="titulo-logo">
+					<img src="resources/img/logo.png" alt="Logo" class="logo-img" />
+					Ñam Ñam
+				</h2>
+				<p>Panel de Administración</p>
+				<p:menu styleClass="menu-vertical">
+					<p:menuitem value="Órdenes de Compra" url="principal.xhtml"
+						icon="pi pi-shopping-cart" />
+					<p:menuitem value="Lote" url="lote.xhtml" icon="pi pi-box" />
+					<p:menuitem value="Ingredientes" url="ingrediente.xhtml"
+						icon="pi pi-apple" />
+					<p:menuitem value="Inventario" url="inventario.xhtml"
+						icon="pi pi-tags" />
+					<p:menuitem value="Recetas" url="receta.xhtml" icon="pi pi-book" />
+					<p:menuitem value="Platos" url="plato.xhtml" icon="pi pi-th-large" />
+					<p:menuitem value="Empresas Proveedoras" url="empresa.xhtml"
+						icon="pi pi-building" />
+					<p:menuitem value="Proveedores Asociados" url="proveedor.xhtml"
+						icon="pi pi-truck" />
+				</p:menu>
+			</div>
 
-            <div class="main">
-                <div class="header-card">
-                    <h1 class="page-title">Órdenes de Compra</h1>
-                    <p class="section-title">Gestión y seguimiento de las órdenes recibidas</p>
-                </div>
+			<div class="main">
+				<div class="header-card">
+					<div class="header-left">
+						<h1 class="page-title">Órdenes de Compra</h1>
+						<p class="section-title">Gestión y seguimiento de las órdenes
+							recibidas</p>
+					</div>
 
-                <div class="table-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <div>
-                            <h3 style="margin:0">Listado de órdenes</h3>
-                            <small class="section-title">Total: <strong>#{ordenCompraBean.ordenes.size()}</strong></small>
-                        </div>
+					<div class="header-right">
+						<p:commandButton value="Cerrar Sesión" icon="pi pi-sign-out"
+							action="#{validarIngreso.logout}" styleClass="logout-btn"
+							process="@this" />
+					</div>
+				</div>
 
-                        <div class="actions-row">
-                            <p:messages id="msgs" autoUpdate="true" closable="true" showDetail="true" showSummary="false" />
-                            <p:commandButton icon="pi pi-refresh" title="Refrescar"
-                                             update=":ordenesForm:dtOrdenes"
-                                             actionListener="#{ordenCompraBean.cargarOrdenes}"
-                                             process="@this"/>
-                            <p:commandButton value="➕ Nueva Orden" icon="pi pi-plus"
-                                             actionListener="#{ordenCompraBean.prepararNuevaOrden}"
-                                             oncomplete="PF('dlgNuevaOrden').show()"
-                                             process="@this"/>
-                        </div>
-                    </div>
+				<div class="table-card">
+					<div
+						style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+						<div>
+							<h3 style="margin: 0">Listado de órdenes</h3>
+							<small class="section-title">Total: <strong>#{ordenCompraBean.ordenes.size()}</strong></small>
+						</div>
 
-                    <p:dataTable id="dtOrdenes" value="#{ordenCompraBean.ordenes}" var="orden"
-                                 rowIndexVar="rowIndex"
-                                 paginator="true" rows="8" responsiveLayout="scroll" style="width:100%"
-                                 emptyMessage="No se encontraron órdenes de compra">
+						<div class="actions-row">
+							<p:messages id="msgs" autoUpdate="true" closable="true"
+								showDetail="true" showSummary="false" />
+							<p:commandButton icon="pi pi-refresh" title="Refrescar"
+								update=":ordenesForm:dtOrdenes"
+								actionListener="#{ordenCompraBean.cargarOrdenes}"
+								process="@this" />
+							<p:commandButton value="Nueva Orden" icon="pi pi-plus"
+								actionListener="#{ordenCompraBean.prepararNuevaOrden}"
+								oncomplete="PF('dlgNuevaOrden').show()" process="@this"
+								update=":formCrear:selIng :formCrear:ingredientesTable :formCrear:selCant :ordenesForm:msgs" />
+						</div>
+					</div>
 
-                        <p:column headerText="ID" style="width:70px; text-align:center;">
-                            <h:outputText value="#{orden.ordenId != null ? orden.ordenId : (rowIndex + 1)}" />
-                        </p:column>
+					<p:dataTable id="dtOrdenes" value="#{ordenCompraBean.ordenes}"
+						var="orden" rowIndexVar="rowIndex" paginator="true" rows="8"
+						responsiveLayout="scroll" style="width:100%"
+						emptyMessage="No se encontraron órdenes de compra">
 
-                        <p:column headerText="Fecha Emisión">
-                            <h:outputText value="#{orden.fechaEmision}" />
-                        </p:column>
+						<p:column headerText="ID" style="min-width:200px;">
+							<h:outputText
+								value="#{orden.ordenId != null ? orden.ordenId : (rowIndex + 1)}" />
+						</p:column>
 
-                        <p:column headerText="Estado">
-                            <h:outputText value="#{orden.estado}" />
-                        </p:column>
+						<p:column headerText="Fecha Emisión" style="width:85px;">
+							<h:outputText value="#{orden.fechaEmision}" />
+						</p:column>
 
-                        <p:column headerText="Empresa (NIT)">
-                            <h:outputText value="#{orden.nitEmpresa}" />
-                        </p:column>
+						<p:column headerText="Estado" style="min-width:300px;">
+							<h:outputText value="#{orden.estado}" />
+						</p:column>
 
-                        <p:column headerText="Administrador">
-                            <h:outputText value="#{orden.administradorNombre != null ? orden.administradorNombre : orden.administradorId}" />
-                        </p:column>
+						<p:column headerText="Empresa (NIT)" style="min-width:200px;">
+							<h:outputText value="#{orden.nitEmpresa}" />
+						</p:column>
 
-                        <p:column headerText="Ingredientes" style="width:160px; text-align:center;">
-                            <p:commandButton value="Mostrar ingredientes"
-                                             icon="pi pi-list"
-                                             actionListener="#{ordenCompraBean.verDetalles(orden)}"
-                                             update=":ordenesForm:dlgIngredientesGrid"
-                                             oncomplete="PF('dlgIngredientes').show()"
-                                             process="@this" />
-                        </p:column>
+						<p:column headerText="Administrador" style="width:160px;">
+							<h:outputText
+								value="#{orden.administradorNombre != null ? orden.administradorNombre : orden.administradorId}" />
+						</p:column>
 
-                        <p:column headerText="Acciones" style="width:240px">
-                            <p:commandButton icon="pi pi-search" title="Ver detalle"
-                                             actionListener="#{ordenCompraBean.verDetalles(orden)}"
-                                             update=":ordenesForm:dlgDetalleGrid"
-                                             oncomplete="PF('dlgDetalle').show()"
-                                             process="@this" styleClass="ui-button-info"/>
+						<p:column headerText="Ingredientes"
+							style="width:160px;">
+							<p:commandButton value="Mostrar ingredientes" icon="pi pi-list"
+								actionListener="#{ordenCompraBean.verDetalles(orden)}"
+								update=":ordenesForm:dlgIngredientesGrid"
+								oncomplete="PF('dlgIngredientes').show()" process="@this" />
+						</p:column>
 
-                            <p:commandButton icon="pi pi-pencil" title="Editar"
-                                             actionListener="#{ordenCompraBean.seleccionarParaEditar(orden)}"
-                                             update=":formEditar:dlgEditarGrid"
-                                             oncomplete="PF('dlgEditar').show()"
-                                             process="@this" styleClass="ui-button-warning"/>
+						<p:column headerText="Acciones" style="width:120px">
+							<p:commandButton icon="pi pi-search" title="Ver detalle"
+								actionListener="#{ordenCompraBean.verDetalles(orden)}"
+								update=":ordenesForm:dlgDetalleGrid"
+								oncomplete="PF('dlgDetalle').show()" process="@this"
+								styleClass="ui-button-info" />
 
-                            <!-- Inactivar (antes 'eliminar'): prepara id y abre confirm -->
-                            <p:commandButton icon="pi pi-trash" title="Inactivar orden"
-                                             actionListener="#{ordenCompraBean.prepararCancelar(orden.ordenId)}"
-                                             process="@this"
-                                             update=":ordenesForm:msgs"
-                                             oncomplete="PF('confirmDelete').show()" styleClass="ui-button-danger"/>
-                        </p:column>
+							<p:commandButton icon="pi pi-pencil" title="Editar"
+								actionListener="#{ordenCompraBean.seleccionarParaEditar(orden)}"
+								update=":formEditar:dlgEditarGrid"
+								oncomplete="PF('dlgEditar').show()" process="@this"
+								styleClass="ui-button-warning" />
 
-                    </p:dataTable>
+							<p:commandButton icon="pi pi-trash" title="Inactivar orden"
+								actionListener="#{ordenCompraBean.prepararCancelar(orden.ordenId)}"
+								process="@this" update=":ordenesForm:msgs"
+								oncomplete="PF('confirmDelete').show()"
+								styleClass="ui-button-danger" />
+						</p:column>
 
-                    <!-- Detalle (en ordenesForm) -->
-                    <p:dialog header="Detalle de la Orden" widgetVar="dlgDetalle" modal="true" id="dlgDetalle" closable="true">
-                        <h:panelGrid id="dlgDetalleGrid" columns="2" cellpadding="6">
-                            <h:outputText value="ID:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.ordenId}" />
+					</p:dataTable>
 
-                            <h:outputText value="Fecha Emisión:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.fechaEmision}" />
+					<p:dialog header="Detalle de la Orden" widgetVar="dlgDetalle"
+						modal="true" id="dlgDetalle" closable="true">
+						<h:panelGrid id="dlgDetalleGrid" columns="2" cellpadding="6">
+							<h:outputText value="ID:" />
+							<h:outputText
+								value="#{ordenCompraBean.ordenSeleccionada.ordenId}" />
 
-                            <h:outputText value="Estado:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.estado}" />
+							<h:outputText value="Fecha Emisión:" />
+							<h:outputText
+								value="#{ordenCompraBean.ordenSeleccionada.fechaEmision}" />
 
-                            <h:outputText value="Empresa NIT:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.nitEmpresa}" />
+							<h:outputText value="Estado:" />
+							<h:outputText value="#{ordenCompraBean.ordenSeleccionada.estado}" />
 
-                            <h:outputText value="Administrador:" />
-                            <h:outputText value="#{ordenCompraBean.ordenSeleccionada.administradorNombre != null ? ordenCompraBean.ordenSeleccionada.administradorNombre : ordenCompraBean.ordenSeleccionada.administradorId}" />
-                        </h:panelGrid>
-                    </p:dialog>
+							<h:outputText value="Empresa NIT:" />
+							<h:outputText
+								value="#{ordenCompraBean.ordenSeleccionada.nitEmpresa}" />
 
-                    <!-- Ingredientes de la orden (dialog) - sin columna Costo unit. -->
-                    <p:dialog header="Ingredientes de la Orden" widgetVar="dlgIngredientes" modal="true" id="dlgIngredientes" closable="true" width="600">
-                        <h:panelGrid id="dlgIngredientesGrid" columns="1" cellpadding="6">
-                            <p:dataTable value="#{ordenCompraBean.ordenSeleccionada.ingredientes}" var="ing" rows="8" emptyMessage="No hay ingredientes en esta orden">
-                                <p:column headerText="Código" style="width:90px">
-                                    <h:outputText value="#{ing.codigo}" />
-                                </p:column>
-                                <p:column headerText="Nombre">
-                                    <h:outputText value="#{ing.nombre}" />
-                                </p:column>
-                                <p:column headerText="Cantidad">
-                                    <h:outputText value="#{ing.cantidad}" />
-                                </p:column>
-                            </p:dataTable>
-                        </h:panelGrid>
-                    </p:dialog>
+							<h:outputText value="Administrador:" />
+							<h:outputText
+								value="#{ordenCompraBean.ordenSeleccionada.administradorNombre != null ? ordenCompraBean.ordenSeleccionada.administradorNombre : ordenCompraBean.ordenSeleccionada.administradorId}" />
+						</h:panelGrid>
+					</p:dialog>
 
-                    <!-- Confirm inactivar (usa eliminarId preparado en prepararCancelar) -->
-                    <p:confirmDialog widgetVar="confirmDelete" header="Confirmar" message="¿Marcar esta orden como inactiva?" icon="pi pi-exclamation-triangle">
-                        <p:commandButton value="Sí" actionListener="#{ordenCompraBean.eliminarOrden}"
-                                         update=":ordenesForm:dtOrdenes :ordenesForm:msgs" oncomplete="PF('confirmDelete').hide()" />
-                        <p:commandButton value="No" onclick="PF('confirmDelete').hide();" type="button" />
-                    </p:confirmDialog>
+					<p:dialog header="Ingredientes de la Orden"
+						widgetVar="dlgIngredientes" modal="true" id="dlgIngredientes"
+						closable="true" width="600">
+						<h:panelGrid id="dlgIngredientesGrid" columns="1" cellpadding="6">
+							<p:dataTable
+								value="#{ordenCompraBean.ordenSeleccionada.ingredientes}"
+								var="ing" rows="8"
+								emptyMessage="No hay ingredientes en esta orden">
+								<p:column headerText="Código" style="width:90px">
+									<h:outputText value="#{ing.codigo}" />
+								</p:column>
+								<p:column headerText="Nombre">
+									<h:outputText value="#{ing.nombre}" />
+								</p:column>
+								<p:column headerText="Cantidad(kilos)">
+									<h:outputText value="#{ing.cantidad}" />
+								</p:column>
+							</p:dataTable>
+						</h:panelGrid>
+					</p:dialog>
 
-                </div>
-            </div>
-        </div>
-    </h:form>
+					<p:confirmDialog widgetVar="confirmDelete" header="Confirmar"
+						message="¿Marcar esta orden como inactiva?"
+						icon="pi pi-exclamation-triangle">
+						<p:commandButton value="Sí"
+							actionListener="#{ordenCompraBean.eliminarOrden}"
+							update=":ordenesForm:dtOrdenes :ordenesForm:msgs"
+							oncomplete="PF('confirmDelete').hide()" />
+						<p:commandButton value="No" onclick="PF('confirmDelete').hide();"
+							type="button" />
+					</p:confirmDialog>
 
-    <!-- ===== Editar: propio form ===== -->
-    <h:form id="formEditar">
-        <p:dialog header="Editar Orden" widgetVar="dlgEditar" modal="true" id="dlgEditar" closable="true">
-            <h:panelGrid id="dlgEditarGrid" columns="2" cellpadding="6">
-                <h:outputText value="ID:" />
-                <h:outputText value="#{ordenCompraBean.ordenSeleccionada.ordenId}" />
+				</div>
+			</div>
+		</div>
+	</h:form>
 
-                <h:outputLabel for="editEstado" value="Estado:" />
-                <p:selectOneMenu id="editEstado" value="#{ordenCompraBean.ordenSeleccionada.estado}" required="true">
-                    <f:selectItem itemLabel="pendiente" itemValue="pendiente" />
-                    <f:selectItem itemLabel="en_proceso" itemValue="en_proceso" />
-                    <f:selectItem itemLabel="recibido" itemValue="recibido" />
-                    <f:selectItem itemLabel="cancelado" itemValue="cancelado" />
-                </p:selectOneMenu>
+	<h:form id="formEditar">
+		<p:dialog header="Editar Orden" widgetVar="dlgEditar" modal="true"
+			id="dlgEditar" closable="true">
+			<h:panelGrid id="dlgEditarGrid" columns="2" cellpadding="6">
+				<h:outputText value="ID:" />
+				<h:outputText value="#{ordenCompraBean.ordenSeleccionada.ordenId}" />
 
-                <h:outputLabel for="editNitEmpresa" value="NIT Empresa:" />
-                <p:inputText id="editNitEmpresa" value="#{ordenCompraBean.ordenSeleccionada.nitEmpresa}" required="true" />
+				<h:outputLabel for="editEstado" value="Estado:" />
+				<p:selectOneMenu id="editEstado"
+					value="#{ordenCompraBean.ordenSeleccionada.estado}" required="true">
+					<f:selectItem itemLabel="pendiente" itemValue="pendiente" />
+					<f:selectItem itemLabel="en_proceso" itemValue="en_proceso" />
+					<f:selectItem itemLabel="recibido" itemValue="recibido" />
+					<f:selectItem itemLabel="cancelado" itemValue="cancelado" />
+				</p:selectOneMenu>
 
-                <h:outputLabel for="editAdminId" value="Administrador ID:" />
-                <p:inputText id="editAdminId" value="#{ordenCompraBean.ordenSeleccionada.administradorId}" required="true" />
-            </h:panelGrid>
+				<h:outputLabel for="editNitEmpresa" value="NIT Empresa:" />
+				<p:inputText id="editNitEmpresa"
+					value="#{ordenCompraBean.ordenSeleccionada.nitEmpresa}"
+					required="true" />
 
-            <p:separator />
-            <p:commandButton value="Guardar" actionListener="#{ordenCompraBean.actualizarOrden}"
-                             process="@form"
-                             update=":ordenesForm:dtOrdenes :ordenesForm:msgs :ordenesForm:dlgDetalleGrid"
-                             oncomplete="PF('dlgEditar').hide()" styleClass="ui-button-success" />
-        </p:dialog>
-    </h:form>
+				<h:outputLabel for="editAdminId" value="Administrador ID:" />
+				<p:inputText id="editAdminId"
+					value="#{ordenCompraBean.ordenSeleccionada.administradorId}"
+					required="true" />
+			</h:panelGrid>
 
-    <!-- ===== Crear: propio form ===== -->
-    <h:form id="formCrear">
-        <p:dialog header="Crear Orden" widgetVar="dlgNuevaOrden" modal="true" id="dlgNuevaOrden" closable="true" resizable="false" width="900">
-            <h:panelGrid id="dlgNuevaOrdenGrid" columns="2" cellpadding="6">
-                <!-- No mostramos la fecha de emisión en creación -->
-                <h:outputLabel for="newNitEmpresa" value="NIT Empresa:" />
-                <p:inputText id="newNitEmpresa" value="#{ordenCompraBean.nuevaOrden.nitEmpresa}" required="true" />
+			<p:separator />
+			<p:commandButton value="Guardar"
+				actionListener="#{ordenCompraBean.actualizarOrden}" process="@form"
+				update=":ordenesForm:dtOrdenes :ordenesForm:msgs :ordenesForm:dlgDetalleGrid"
+				oncomplete="PF('dlgEditar').hide()" styleClass="ui-button-success" />
+		</p:dialog>
+	</h:form>
 
-                <h:outputLabel for="newAdminId" value="Administrador ID:" />
-                <p:inputText id="newAdminId" value="#{ordenCompraBean.nuevaOrden.administradorId}" required="true" />
+	<h:form id="formCrear">
+		<p:dialog header="Crear Orden" widgetVar="dlgNuevaOrden" modal="true"
+			id="dlgNuevaOrden" closable="true" resizable="false" width="900">
+			<h:panelGrid id="dlgNuevaOrdenGrid" columns="2" cellpadding="6">
 
-                <h:outputLabel for="newAdminName" value="Administrador (Nombre):" />
-                <p:inputText id="newAdminName" value="#{ordenCompraBean.nuevaOrden.administradorNombre}" />
-            </h:panelGrid>
+				<h:outputLabel for="newNitEmpresa" value="NIT Empresa:" />
+				<p:inputText id="newNitEmpresa"
+					value="#{ordenCompraBean.nuevaOrden.nitEmpresa}" required="true" />
 
-            <p:separator />
+				<h:outputLabel for="newAdminId" value="Administrador ID:" />
+				<p:inputText id="newAdminId"
+					value="#{ordenCompraBean.nuevaOrden.administradorId}"
+					required="true" />
 
-            <!-- Agregar ingredientes: selector + cantidad (sin costo) -->
-            <h:panelGrid columns="4" style="margin-top:1rem" cellpadding="6">
-                <h:outputLabel value="Ingrediente:" for="selIng" />
-                <p:selectOneMenu id="selIng" value="#{ordenCompraBean.selectedIngredienteCodigo}">
-                    <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
-                    <f:selectItems value="#{ordenCompraBean.availableIngredientes}" var="ing"
-                                   itemValue="#{ing.codigo}"
-                                   itemLabel="#{ing.nombre} (cod: #{ing.codigo})" />
-                </p:selectOneMenu>
+				<h:outputLabel for="newAdminName" value="Administrador (Nombre):" />
+				<p:inputText id="newAdminName"
+					value="#{ordenCompraBean.nuevaOrden.administradorNombre}" />
+			</h:panelGrid>
 
-                <h:outputLabel value="Cantidad:" for="selCant" />
-                <p:inputText id="selCant" value="#{ordenCompraBean.selectedCantidad}">
-                    <f:convertNumber integerOnly="true" />
-                </p:inputText>
+			<p:separator />
 
-                <p:commandButton value="Agregar" icon="pi pi-plus"
-                                 actionListener="#{ordenCompraBean.addIngredienteToNuevaOrden}"
-                                 process="@form"
-                                 update=":formCrear:ingredientesTable :formCrear:selIng :formCrear:selCant :ordenesForm:msgs" />
-            </h:panelGrid>
+			<h:panelGrid columns="4" style="margin-top:1rem" cellpadding="6">
+				<h:outputLabel value="Ingrediente:" for="selIng" />
+				<p:selectOneMenu id="selIng"
+					value="#{ordenCompraBean.selectedIngredienteCodigo}">
+					<f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" />
+					<f:selectItems value="#{ordenCompraBean.availableIngredientes}"
+						var="ing" itemValue="#{ing.codigo}"
+						itemLabel="#{ing.nombre} (cod: #{ing.codigo})" />
+				</p:selectOneMenu>
 
-            <!-- Tabla de ingredientes añadidos -->
-            <h:panelGrid columns="1" style="margin-top:1rem">
-                <p:dataTable id="ingredientesTable" value="#{ordenCompraBean.nuevaOrden.ingredientes}" var="ing" rows="6" emptyMessage="Aún no hay ingredientes añadidos">
-                    <p:column headerText="Código" style="width:80px">
-                        <h:outputText value="#{ing.codigo}" />
-                    </p:column>
-                    <p:column headerText="Nombre">
-                        <h:outputText value="#{ing.nombre}" />
-                    </p:column>
-                    <p:column headerText="Cantidad">
-                        <h:outputText value="#{ing.cantidad}" />
-                    </p:column>
-                    <p:column headerText="Acciones" style="width:120px">
-                        <p:commandButton icon="pi pi-trash" title="Remover"
-                                         actionListener="#{ordenCompraBean.removeIngredienteFromNuevaOrden(ing.codigo)}"
-                                         update=":formCrear:ingredientesTable :ordenesForm:msgs" process="@this" />
-                    </p:column>
-                </p:dataTable>
-            </h:panelGrid>
+				<h:outputLabel value="Cantidad(kilos):" for="selCant" />
+				<p:inputText id="selCant"
+					value="#{ordenCompraBean.selectedCantidad}">
+					<f:convertNumber integerOnly="true" />
+				</p:inputText>
 
-            <p:separator />
-            <p:commandButton value="Crear" actionListener="#{ordenCompraBean.crearOrden}"
-                             process="@form"
-                             update=":ordenesForm:dtOrdenes :ordenesForm:msgs"
-                             oncomplete="PF('dlgNuevaOrden').hide()"
-                             styleClass="ui-button-success" />
-        </p:dialog>
-    </h:form>
+				<p:commandButton value="Agregar" icon="pi pi-plus"
+					actionListener="#{ordenCompraBean.addIngredienteToNuevaOrden}"
+					process="@form"
+					update=":formCrear:ingredientesTable :formCrear:selIng :formCrear:selCant :ordenesForm:msgs" />
+			</h:panelGrid>
+
+			<h:panelGrid columns="1" style="margin-top:1rem">
+				<p:dataTable id="ingredientesTable"
+					value="#{ordenCompraBean.nuevaOrden.ingredientes}" var="ing"
+					rows="6" emptyMessage="Aún no hay ingredientes añadidos">
+					<p:column headerText="Código" style="width:80px">
+						<h:outputText value="#{ing.codigo}" />
+					</p:column>
+					<p:column headerText="Nombre">
+						<h:outputText value="#{ing.nombre}" />
+					</p:column>
+					<p:column headerText="Cantidad">
+						<h:outputText value="#{ing.cantidad}" />
+					</p:column>
+					<p:column headerText="Acciones" style="width:120px">
+						<p:commandButton icon="pi pi-trash" title="Remover"
+							actionListener="#{ordenCompraBean.removeIngredienteFromNuevaOrden(ing.codigo)}"
+							update=":formCrear:ingredientesTable :ordenesForm:msgs"
+							process="@this" />
+					</p:column>
+				</p:dataTable>
+			</h:panelGrid>
+
+			<p:separator />
+			<p:commandButton value="Crear"
+				actionListener="#{ordenCompraBean.crearOrden}" process="@form"
+				update=":ordenesForm:dtOrdenes :ordenesForm:msgs"
+				oncomplete="PF('dlgNuevaOrden').hide()"
+				styleClass="ui-button-success" />
+		</p:dialog>
+	</h:form>
 
 </h:body>
 </html>

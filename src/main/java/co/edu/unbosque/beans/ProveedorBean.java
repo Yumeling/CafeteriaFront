@@ -9,17 +9,14 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-
 import co.edu.unbosque.model.ProveedorDTO;
 import co.edu.unbosque.model.EmpresaDTO;
 import co.edu.unbosque.util.LocalDateAdapter;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
@@ -29,228 +26,245 @@ import jakarta.inject.Named;
 @Named("proveedorBean")
 @SessionScoped
 public class ProveedorBean implements Serializable {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
+	private List<ProveedorDTO> proveedores = new ArrayList<>();
+	private ProveedorDTO nuevoProveedor = new ProveedorDTO();
+	private ProveedorDTO proveedorSeleccionado = new ProveedorDTO();
+	private List<EmpresaDTO> empresas = new ArrayList<>();
+	private Integer selectedEmpresaNit;
+	private final String BASE_URL = "http://localhost:8083/api/proveedores";
+	private final String EMP_URL = "http://localhost:8083/api/empresas";
+	private final HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
+			.connectTimeout(Duration.ofSeconds(10)).build();
+	private final Gson gson = new GsonBuilder().registerTypeAdapter(LocalDate.class, new LocalDateAdapter()).create();
 
-    private List<ProveedorDTO> proveedores = new ArrayList<>();
-    private ProveedorDTO nuevoProveedor = new ProveedorDTO();
-    private ProveedorDTO proveedorSeleccionado = new ProveedorDTO();
+	@PostConstruct
+	public void init() {
+		cargarEmpresas();
+		cargarProveedores();
+	}
 
-    private List<EmpresaDTO> empresas = new ArrayList<>();
-    private Integer selectedEmpresaNit; // bind del select
+	public void cargarProveedores() {
+		try {
+			HttpRequest req = HttpRequest.newBuilder().GET().uri(URI.create(BASE_URL))
+					.header("Content-Type", "application/json").build();
 
-    private final String BASE_URL = "http://localhost:8083/api/proveedores";
-    private final String EMP_URL = "http://localhost:8083/api/empresas";
+			HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+			System.out.println("[ProveedorBean] GET " + BASE_URL + " -> " + resp.statusCode());
+			String json = resp.body() == null ? "[]" : resp.body().trim();
 
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_2)
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
+			if (json.startsWith("[")) {
+				Type t = new TypeToken<List<ProveedorDTO>>() {
+				}.getType();
+				List<ProveedorDTO> list = gson.fromJson(json, t);
+				proveedores = list != null ? list : new ArrayList<>();
+			} else if (json.startsWith("{")) {
+				JsonElement je = JsonParser.parseString(json);
+				if (je.getAsJsonObject().has("data")) {
+					String inner = je.getAsJsonObject().get("data").toString();
+					Type t = new TypeToken<List<ProveedorDTO>>() {
+					}.getType();
+					proveedores = gson.fromJson(inner, t);
+				} else {
+					ProveedorDTO single = gson.fromJson(json, ProveedorDTO.class);
+					proveedores = new ArrayList<>();
+					proveedores.add(single);
+				}
+			} else {
+				proveedores = new ArrayList<>();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			proveedores = new ArrayList<>();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudieron cargar los proveedores."));
+		}
+	}
 
-    private final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
-            .create();
+	public void cargarEmpresas() {
+		try {
+			HttpRequest req = HttpRequest.newBuilder().GET().uri(URI.create(EMP_URL))
+					.header("Content-Type", "application/json").build();
 
-    @PostConstruct
-    public void init() {
-        cargarEmpresas();
-        cargarProveedores();
-    }
+			HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+			System.out.println("[ProveedorBean] GET " + EMP_URL + " -> " + resp.statusCode());
+			String json = resp.body() == null ? "[]" : resp.body().trim();
 
-    public void cargarProveedores() {
-        try {
-            HttpRequest req = HttpRequest.newBuilder()
-                    .GET()
-                    .uri(URI.create(BASE_URL))
-                    .header("Content-Type", "application/json")
-                    .build();
+			if (json.startsWith("[")) {
+				Type t = new TypeToken<List<EmpresaDTO>>() {
+				}.getType();
+				List<EmpresaDTO> list = gson.fromJson(json, t);
+				empresas = list != null ? list : new ArrayList<>();
+			} else if (json.startsWith("{")) {
+				JsonElement je = JsonParser.parseString(json);
+				if (je.getAsJsonObject().has("data")) {
+					String inner = je.getAsJsonObject().get("data").toString();
+					Type t = new TypeToken<List<EmpresaDTO>>() {
+					}.getType();
+					empresas = gson.fromJson(inner, t);
+				} else {
+					EmpresaDTO single = gson.fromJson(json, EmpresaDTO.class);
+					empresas = new ArrayList<>();
+					empresas.add(single);
+				}
+			} else {
+				empresas = new ArrayList<>();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			empresas = new ArrayList<>();
+		}
+	}
 
-            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
-            System.out.println("[ProveedorBean] GET " + BASE_URL + " -> " + resp.statusCode());
-            String json = resp.body() == null ? "[]" : resp.body().trim();
+	public void prepararNuevo() {
+		nuevoProveedor = new ProveedorDTO();
+		selectedEmpresaNit = null;
+	}
 
-            if (json.startsWith("[")) {
-                Type t = new TypeToken<List<ProveedorDTO>>() {}.getType();
-                List<ProveedorDTO> list = gson.fromJson(json, t);
-                proveedores = list != null ? list : new ArrayList<>();
-            } else if (json.startsWith("{")) {
-                JsonElement je = JsonParser.parseString(json);
-                if (je.getAsJsonObject().has("data")) {
-                    String inner = je.getAsJsonObject().get("data").toString();
-                    Type t = new TypeToken<List<ProveedorDTO>>() {}.getType();
-                    proveedores = gson.fromJson(inner, t);
-                } else {
-                    ProveedorDTO single = gson.fromJson(json, ProveedorDTO.class);
-                    proveedores = new ArrayList<>();
-                    proveedores.add(single);
-                }
-            } else {
-                proveedores = new ArrayList<>();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            proveedores = new ArrayList<>();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudieron cargar los proveedores."));
-        }
-    }
+	public void crearProveedor() {
+		try {
+			if (nuevoProveedor.getPrimerNombre() == null || nuevoProveedor.getPrimerNombre().isBlank()
+					|| nuevoProveedor.getPrimerApellido() == null || nuevoProveedor.getPrimerApellido().isBlank()) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+						"Error", "Primer nombre y primer apellido son obligatorios."));
+				return;
+			}
+			if (selectedEmpresaNit != null) {
+				nuevoProveedor.setNitEmpresa(selectedEmpresaNit);
+			}
 
-    public void cargarEmpresas() {
-        try {
-            HttpRequest req = HttpRequest.newBuilder()
-                    .GET()
-                    .uri(URI.create(EMP_URL))
-                    .header("Content-Type", "application/json")
-                    .build();
+			String json = gson.toJson(nuevoProveedor);
+			System.out.println("[ProveedorBean] POST payload: " + json);
 
-            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
-            System.out.println("[ProveedorBean] GET " + EMP_URL + " -> " + resp.statusCode());
-            String json = resp.body() == null ? "[]" : resp.body().trim();
+			HttpRequest req = HttpRequest.newBuilder().uri(URI.create(BASE_URL))
+					.header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(json)).build();
 
-            if (json.startsWith("[")) {
-                Type t = new TypeToken<List<EmpresaDTO>>() {}.getType();
-                List<EmpresaDTO> list = gson.fromJson(json, t);
-                empresas = list != null ? list : new ArrayList<>();
-            } else if (json.startsWith("{")) {
-                JsonElement je = JsonParser.parseString(json);
-                if (je.getAsJsonObject().has("data")) {
-                    String inner = je.getAsJsonObject().get("data").toString();
-                    Type t = new TypeToken<List<EmpresaDTO>>() {}.getType();
-                    empresas = gson.fromJson(inner, t);
-                } else {
-                    EmpresaDTO single = gson.fromJson(json, EmpresaDTO.class);
-                    empresas = new ArrayList<>();
-                    empresas.add(single);
-                }
-            } else {
-                empresas = new ArrayList<>();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            empresas = new ArrayList<>();
-        }
-    }
+			HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+			System.out.println("[ProveedorBean] POST " + BASE_URL + " -> " + resp.statusCode());
+			System.out.println("[ProveedorBean] POST response body: " + (resp.body() == null ? "" : resp.body()));
 
-    public void prepararNuevo() {
-        nuevoProveedor = new ProveedorDTO();
-        selectedEmpresaNit = null;
-    }
+			if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Proveedor creado."));
+			} else {
+				String detalle = resp.body() == null ? "Código: " + resp.statusCode() : resp.body();
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error creando proveedor", detalle));
+			}
 
-    public void crearProveedor() {
-        try {
-            // validaciones simples
-            if (nuevoProveedor.getPrimerNombre() == null || nuevoProveedor.getPrimerNombre().isBlank()
-                    || nuevoProveedor.getPrimerApellido() == null || nuevoProveedor.getPrimerApellido().isBlank()) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Primer nombre y primer apellido son obligatorios."));
-                return;
-            }
+			prepararNuevo();
+			cargarProveedores();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
+		}
+	}
 
-            if (selectedEmpresaNit != null) {
-                nuevoProveedor.setNitEmpresa(selectedEmpresaNit);
-            }
+	public void prepararEditar(ProveedorDTO p) {
+		if (p == null)
+			return;
+		this.proveedorSeleccionado = p;
+		this.selectedEmpresaNit = p.getNitEmpresa();
+	}
 
-            String json = gson.toJson(nuevoProveedor);
-            System.out.println("[ProveedorBean] POST payload: " + json);
+	public void actualizarProveedor() {
+		try {
+			if (proveedorSeleccionado == null || proveedorSeleccionado.getProveedorId() == null) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Seleccione un proveedor para editar."));
+				return;
+			}
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
+			if (proveedorSeleccionado.getPrimerNombre() == null || proveedorSeleccionado.getPrimerNombre().isBlank()
+					|| proveedorSeleccionado.getPrimerApellido() == null
+					|| proveedorSeleccionado.getPrimerApellido().isBlank()) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+						"Error", "Primer nombre y primer apellido son obligatorios."));
+				return;
+			}
 
-            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
-            System.out.println("[ProveedorBean] POST " + BASE_URL + " -> " + resp.statusCode());
-            System.out.println("[ProveedorBean] POST response body: " + (resp.body() == null ? "" : resp.body()));
+			if (selectedEmpresaNit != null)
+				proveedorSeleccionado.setNitEmpresa(selectedEmpresaNit);
 
-            if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Proveedor creado."));
-            } else {
-                String detalle = resp.body() == null ? "Código: " + resp.statusCode() : resp.body();
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error creando proveedor", detalle));
-            }
+			String json = gson.toJson(proveedorSeleccionado);
+			System.out.println("[ProveedorBean] PUT payload: " + json);
 
-            prepararNuevo();
-            cargarProveedores();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
-        }
-    }
+			HttpRequest req = HttpRequest.newBuilder()
+					.uri(URI.create(BASE_URL + "/" + proveedorSeleccionado.getProveedorId()))
+					.header("Content-Type", "application/json").PUT(HttpRequest.BodyPublishers.ofString(json)).build();
 
-    public void prepararEditar(ProveedorDTO p) {
-        if (p == null) return;
-        // asignamos la referencia (si quieres clonar hazlo aquí)
-        this.proveedorSeleccionado = p;
-        this.selectedEmpresaNit = p.getNitEmpresa();
-    }
+			HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+			System.out.println("[ProveedorBean] PUT " + BASE_URL + "/" + proveedorSeleccionado.getProveedorId() + " -> "
+					+ resp.statusCode());
+			System.out.println("[ProveedorBean] PUT response body: " + (resp.body() == null ? "" : resp.body()));
 
-    public void actualizarProveedor() {
-        try {
-            if (proveedorSeleccionado == null || proveedorSeleccionado.getProveedorId() == null) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Seleccione un proveedor para editar."));
-                return;
-            }
+			if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Proveedor actualizado."));
+			} else {
+				String detalle = resp.body() == null ? "Código: " + resp.statusCode() : resp.body();
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error actualizando proveedor", detalle));
+			}
 
-            if (proveedorSeleccionado.getPrimerNombre() == null || proveedorSeleccionado.getPrimerNombre().isBlank()
-                    || proveedorSeleccionado.getPrimerApellido() == null || proveedorSeleccionado.getPrimerApellido().isBlank()) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Primer nombre y primer apellido son obligatorios."));
-                return;
-            }
+			cargarProveedores();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
+		}
+	}
 
-            if (selectedEmpresaNit != null) proveedorSeleccionado.setNitEmpresa(selectedEmpresaNit);
+	public List<ProveedorDTO> getProveedores() {
+		return proveedores;
+	}
 
-            String json = gson.toJson(proveedorSeleccionado);
-            System.out.println("[ProveedorBean] PUT payload: " + json);
+	public void setProveedores(List<ProveedorDTO> proveedores) {
+		this.proveedores = proveedores;
+	}
 
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/" + proveedorSeleccionado.getProveedorId()))
-                    .header("Content-Type", "application/json")
-                    .PUT(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
+	public ProveedorDTO getNuevoProveedor() {
+		return nuevoProveedor;
+	}
 
-            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
-            System.out.println("[ProveedorBean] PUT " + BASE_URL + "/" + proveedorSeleccionado.getProveedorId() + " -> " + resp.statusCode());
-            System.out.println("[ProveedorBean] PUT response body: " + (resp.body() == null ? "" : resp.body()));
+	public void setNuevoProveedor(ProveedorDTO nuevoProveedor) {
+		this.nuevoProveedor = nuevoProveedor;
+	}
 
-            if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Proveedor actualizado."));
-            } else {
-                String detalle = resp.body() == null ? "Código: " + resp.statusCode() : resp.body();
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error actualizando proveedor", detalle));
-            }
+	public ProveedorDTO getProveedorSeleccionado() {
+		return proveedorSeleccionado;
+	}
 
-            cargarProveedores();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_FATAL, "Error", e.getMessage()));
-        }
-    }
+	public void setProveedorSeleccionado(ProveedorDTO proveedorSeleccionado) {
+		this.proveedorSeleccionado = proveedorSeleccionado;
+	}
 
-    // getters / setters
-    public List<ProveedorDTO> getProveedores() { return proveedores; }
-    public void setProveedores(List<ProveedorDTO> proveedores) { this.proveedores = proveedores; }
+	public List<EmpresaDTO> getEmpresas() {
+		return empresas;
+	}
 
-    public ProveedorDTO getNuevoProveedor() { return nuevoProveedor; }
-    public void setNuevoProveedor(ProveedorDTO nuevoProveedor) { this.nuevoProveedor = nuevoProveedor; }
+	public void setEmpresas(List<EmpresaDTO> empresas) {
+		this.empresas = empresas;
+	}
 
-    public ProveedorDTO getProveedorSeleccionado() { return proveedorSeleccionado; }
-    public void setProveedorSeleccionado(ProveedorDTO proveedorSeleccionado) { this.proveedorSeleccionado = proveedorSeleccionado; }
+	public Integer getSelectedEmpresaNit() {
+		return selectedEmpresaNit;
+	}
 
-    public List<EmpresaDTO> getEmpresas() { return empresas; }
-    public void setEmpresas(List<EmpresaDTO> empresas) { this.empresas = empresas; }
+	public void setSelectedEmpresaNit(Integer selectedEmpresaNit) {
+		this.selectedEmpresaNit = selectedEmpresaNit;
+	}
 
-    public Integer getSelectedEmpresaNit() { return selectedEmpresaNit; }
-    public void setSelectedEmpresaNit(Integer selectedEmpresaNit) { this.selectedEmpresaNit = selectedEmpresaNit; }
+	public String getBASE_URL() {
+		return BASE_URL;
+	}
 
-    public String getBASE_URL() { return BASE_URL; }
-    public String getEMP_URL() { return EMP_URL; }
-    public Gson getGson() { return gson; }
+	public String getEMP_URL() {
+		return EMP_URL;
+	}
+
+	public Gson getGson() {
+		return gson;
+	}
 }

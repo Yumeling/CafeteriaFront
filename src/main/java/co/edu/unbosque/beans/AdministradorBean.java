@@ -22,62 +22,62 @@ import jakarta.inject.Named;
 @Named("administradorBean")
 @SessionScoped
 public class AdministradorBean implements Serializable {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
+	private List<AdministradorDTO> administradores = new ArrayList<>();
+	private AdministradorDTO nuevoAdministrador = new AdministradorDTO();
+	private AdministradorDTO seleccionado;
 
-    private List<AdministradorDTO> administradores = new ArrayList<>();
-    private AdministradorDTO nuevoAdministrador = new AdministradorDTO();
-    private AdministradorDTO seleccionado;
+	private final String BASE_URL = "http://localhost:8083/api/administradores";
 
-    private final String BASE_URL = "http://localhost:8083/api/administradores";
+	private final Gson gson = new GsonBuilder().registerTypeAdapter(java.time.LocalDate.class, new LocalDateAdapter())
+			.create();
 
-    private final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(java.time.LocalDate.class, new LocalDateAdapter())
-            .create();
+	@PostConstruct
+	public void init() {
+		cargarAdministradores();
+	}
 
-    @PostConstruct
-    public void init() {
-        cargarAdministradores();
-    }
+	public void cargarAdministradores() {
+		try {
+			String body = ExternalHTTPRequestHandler.doGet(BASE_URL + "/all");
+			Type t = new TypeToken<List<AdministradorDTO>>() {
+			}.getType();
+			administradores = gson.fromJson(body, t);
+			if (administradores == null)
+				administradores = new ArrayList<>();
+		} catch (Exception e) {
+			e.printStackTrace();
+			administradores = new ArrayList<>();
+		}
+	}
 
-    public void cargarAdministradores() {
-        try {
-            String body = ExternalHTTPRequestHandler.doGet(BASE_URL + "/all");
-            Type t = new TypeToken<List<AdministradorDTO>>() {}.getType();
-            administradores = gson.fromJson(body, t);
-            if (administradores == null) administradores = new ArrayList<>();
-        } catch (Exception e) {
-            e.printStackTrace();
-            administradores = new ArrayList<>();
-        }
-    }
+	public void crearAdministrador() {
+		try {
+			String json = gson.toJson(nuevoAdministrador);
+			ExternalHTTPRequestHandler.doPost(BASE_URL + "/create", json);
+			nuevoAdministrador = new AdministradorDTO();
+			cargarAdministradores();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Administrador creado"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo crear el administrador"));
+		}
+	}
 
-    public void crearAdministrador() {
-        try {
-            String json = gson.toJson(nuevoAdministrador);
-            ExternalHTTPRequestHandler.doPost(BASE_URL + "/create", json);
-            nuevoAdministrador = new AdministradorDTO();
-            cargarAdministradores();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Administrador creado"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo crear el administrador"));
-        }
-    }
-
-    public void eliminarAdministrador(Integer id) {
-        try {
-            ExternalHTTPRequestHandler.doDelete(BASE_URL + "/delete/" + id);
-            cargarAdministradores();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Administrador eliminado"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo eliminar"));
-        }
-    }
+	public void eliminarAdministrador(Integer id) {
+		try {
+			ExternalHTTPRequestHandler.doDelete(BASE_URL + "/delete/" + id);
+			cargarAdministradores();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Administrador eliminado"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo eliminar"));
+		}
+	}
 
 	public List<AdministradorDTO> getAdministradores() {
 		return administradores;
@@ -115,5 +115,4 @@ public class AdministradorBean implements Serializable {
 		return gson;
 	}
 
-    
 }

@@ -7,27 +7,25 @@ import jakarta.faces.convert.Converter;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Converter simple para LocalDate usando formato yyyy-MM-dd
- */
 @FacesConverter("localDateConverter")
 public class LocalDateConverter implements Converter<LocalDate> {
+	private static final DateTimeFormatter F = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    private static final DateTimeFormatter F = DateTimeFormatter.ISO_LOCAL_DATE; // "yyyy-MM-dd"
+	@Override
+	public LocalDate getAsObject(FacesContext context, UIComponent component, String value) {
+		if (value == null || value.trim().isEmpty())
+			return null;
+		try {
+			return LocalDate.parse(value, F);
+		} catch (Exception ex) {
+			return null;
+		}
+	}
 
-    @Override
-    public LocalDate getAsObject(FacesContext context, UIComponent component, String value) {
-        if (value == null || value.trim().isEmpty()) return null;
-        try {
-            return LocalDate.parse(value, F);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    @Override
-    public String getAsString(FacesContext context, UIComponent component, LocalDate value) {
-        if (value == null) return "";
-        return value.format(F);
-    }
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, LocalDate value) {
+		if (value == null)
+			return "";
+		return value.format(F);
+	}
 }
